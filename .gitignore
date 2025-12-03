@@ -47,3 +47,11 @@ __pypackages__/
 # OS
 .DS_Store
 Thumbs.db
+
+  # Secrets and credentials
+  tokens.conf
+  *.token
+  .env
+  .env.local
+  credentials.json
+  

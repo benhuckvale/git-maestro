@@ -109,6 +109,10 @@ Git Maestro has a comprehensive test suite with 28+ tests covering:
 
 See [tests/README.md](tests/README.md) for more details.
 
+### Security Note
+
+Git Maestro stores tokens in `~/.config/git-maestro/tokens.conf` (outside the repository). The `.gitignore` file blocks common sensitive patterns (`*.token`, `.env`, `credentials.json`, etc.). Unit tests use mocks and don't require real tokens.
+
 ## Extending Git Maestro
 
 To add a new action:
