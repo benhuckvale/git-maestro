@@ -27,7 +27,9 @@ class NumberValidator(Validator):
         if text and not text.isdigit():
             raise ValidationError(message="Please enter a number")
         if text and (int(text) < 0 or int(text) > self.max_choice):
-            raise ValidationError(message=f"Please enter a number between 0 and {self.max_choice}")
+            raise ValidationError(
+                message=f"Please enter a number between 0 and {self.max_choice}"
+            )
 
 
 class Menu:
@@ -47,30 +49,44 @@ class Menu:
         table.add_row("📁 Path", str(self.state.path))
         table.add_row(
             "📦 Git Repository",
-            "[green]Yes[/green]" if self.state.is_git_repo else "[red]No[/red]"
+            "[green]Yes[/green]" if self.state.is_git_repo else "[red]No[/red]",
         )
 
         if self.state.is_git_repo:
             table.add_row(
                 "📝 Has Commits",
-                "[green]Yes[/green]" if self.state.has_commits else "[red]No[/red]"
+                "[green]Yes[/green]" if self.state.has_commits else "[red]No[/red]",
             )
             if self.state.branch_name:
                 table.add_row("🌿 Branch", self.state.branch_name)
             table.add_row(
                 "📄 README",
-                "[green]Exists[/green]" if self.state.has_readme else "[yellow]Missing[/yellow]"
+                (
+                    "[green]Exists[/green]"
+                    if self.state.has_readme
+                    else "[yellow]Missing[/yellow]"
+                ),
             )
             table.add_row(
                 "🚫 .gitignore",
-                "[green]Exists[/green]" if self.state.has_gitignore else "[yellow]Missing[/yellow]"
+                (
+                    "[green]Exists[/green]"
+                    if self.state.has_gitignore
+                    else "[yellow]Missing[/yellow]"
+                ),
             )
             table.add_row(
                 "🌐 Remote",
-                f"[green]{self.state.remote_url}[/green]" if self.state.has_remote else "[yellow]Not configured[/yellow]"
+                (
+                    f"[green]{self.state.remote_url}[/green]"
+                    if self.state.has_remote
+                    else "[yellow]Not configured[/yellow]"
+                ),
             )
             if self.state.untracked_files:
-                table.add_row("📋 Untracked Files", str(len(self.state.untracked_files)))
+                table.add_row(
+                    "📋 Untracked Files", str(len(self.state.untracked_files))
+                )
             if self.state.modified_files:
                 table.add_row("✏️  Modified Files", str(len(self.state.modified_files)))
 
@@ -78,7 +94,7 @@ class Menu:
             table,
             title="[bold magenta]🎼 Git Maestro - Repository State[/bold magenta]",
             border_style="magenta",
-            padding=(1, 2)
+            padding=(1, 2),
         )
         console.print(panel)
 
@@ -91,8 +107,14 @@ class Menu:
         self.applicable_actions = self.get_applicable_actions()
 
         if not self.applicable_actions:
-            console.print("\n[bold green]✨ Everything looks good! No actions needed.[/bold green]\n")
+            console.print(
+                "\n[bold green]✨ Everything looks good! No actions needed.[/bold green]\n"
+            )
             return False
+
+        # Group actions by category
+        setup_actions = [a for a in self.applicable_actions if a.category == "setup"]
+        info_actions = [a for a in self.applicable_actions if a.category == "info"]
 
         console.print("\n[bold cyan]Available Actions:[/bold cyan]\n")
 
@@ -102,18 +124,34 @@ class Menu:
         menu_table.add_column("Action", style="bold")
         menu_table.add_column("Description", style="dim")
 
-        for idx, action in enumerate(self.applicable_actions, 1):
-            menu_table.add_row(
-                str(idx),
-                action.get_display_name(),
-                action.description
-            )
+        current_idx = 1
 
-        menu_table.add_row(
-            "0",
-            "❌ Exit",
-            "Exit git-maestro"
-        )
+        # Add setup actions first
+        if setup_actions:
+            menu_table.add_row(
+                "", "[bold yellow]Setup[/bold yellow]", "", end_section=True
+            )
+            for action in setup_actions:
+                menu_table.add_row(
+                    str(current_idx), action.get_display_name(), action.description
+                )
+                current_idx += 1
+
+        # Add info actions
+        if info_actions:
+            if setup_actions:
+                menu_table.add_row("", "", "")  # Spacing row
+            menu_table.add_row(
+                "", "[bold yellow]Information[/bold yellow]", "", end_section=True
+            )
+            for action in info_actions:
+                menu_table.add_row(
+                    str(current_idx), action.get_display_name(), action.description
+                )
+                current_idx += 1
+
+        menu_table.add_row("", "", "")  # Spacing row
+        menu_table.add_row("0", "❌ Exit", "Exit git-maestro")
 
         console.print(menu_table)
         console.print()
@@ -127,7 +165,7 @@ class Menu:
             choice = prompt(
                 "Select an action (0 to exit): ",
                 completer=completer,
-                validator=validator
+                validator=validator,
             )
 
             choice_num = int(choice)
