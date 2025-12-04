@@ -20,10 +20,21 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
 
     - name: Install PDM
       run: |
         pip install pdm
+
+    - name: Cache PDM dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          .venv
+          __pypackages__
+        key: pdm-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('pdm.lock') }}
+        restore-keys: |
+          pdm-${{ runner.os }}-py${{ matrix.python-version }}-
 
     - name: Install dependencies
       run: |
