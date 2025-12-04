@@ -48,10 +48,12 @@ __pypackages__/
 .DS_Store
 Thumbs.db
 
-  # Secrets and credentials
-  tokens.conf
-  *.token
-  .env
-  .env.local
-  credentials.json
-  
+# Git Maestro data
+.git-maestro/
+
+# Secrets and credentials
+tokens.conf
+*.token
+.env
+.env.local
+credentials.json
