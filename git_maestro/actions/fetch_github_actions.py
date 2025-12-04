@@ -2,6 +2,7 @@
 
 import re
 from pathlib import Path
+from typing import Optional
 from rich.console import Console
 from rich.table import Table
 from github import Github, GithubException
@@ -34,7 +35,7 @@ class FetchGithubActionsAction(Action):
         # Only show if we haven't checked GitHub Actions yet
         return not state.has_fact("github_actions_checked")
 
-    def _get_stored_token(self) -> str | None:
+    def _get_stored_token(self) -> Optional[str]:
         """Get stored GitHub token."""
         if not CONFIG_FILE.exists():
             return None
@@ -47,7 +48,7 @@ class FetchGithubActionsAction(Action):
             return None
         return None
 
-    def _parse_github_url(self, remote_url: str) -> tuple[str, str] | None:
+    def _parse_github_url(self, remote_url: str) -> Optional[tuple[str, str]]:
         """Parse GitHub URL to extract owner and repo name."""
         # Handle HTTPS URLs: https://github.com/owner/repo.git
         https_match = re.search(
@@ -69,7 +70,7 @@ class FetchGithubActionsAction(Action):
         remaining_minutes = minutes % 60
         return f"{hours}h {remaining_minutes}m"
 
-    def _get_status_color(self, status: str, conclusion: str | None) -> str:
+    def _get_status_color(self, status: str, conclusion: Optional[str]) -> str:
         """Get color for status display."""
         if status == "completed":
             if conclusion == "success":
@@ -87,7 +88,7 @@ class FetchGithubActionsAction(Action):
         else:
             return "dim"
 
-    def _get_status_emoji(self, status: str, conclusion: str | None) -> str:
+    def _get_status_emoji(self, status: str, conclusion: Optional[str]) -> str:
         """Get emoji for status."""
         if status == "completed":
             if conclusion == "success":

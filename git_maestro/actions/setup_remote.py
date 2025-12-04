@@ -2,6 +2,7 @@
 
 import os
 from pathlib import Path
+from typing import Optional
 from rich.console import Console
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import WordCompleter
@@ -32,7 +33,7 @@ class SetupRemoteAction(Action):
         """This action is applicable if the directory is a git repo without a remote."""
         return state.is_git_repo and not state.has_remote
 
-    def _get_stored_token(self, provider: str) -> str | None:
+    def _get_stored_token(self, provider: str) -> Optional[str]:
         """Get stored token for a provider."""
         if not CONFIG_FILE.exists():
             return None

@@ -3,6 +3,7 @@
 import re
 from pathlib import Path
 from datetime import datetime
+from typing import Optional
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from github import Github, GithubException
@@ -34,7 +35,7 @@ class DownloadJobTracesAction(Action):
             and state.get_fact("github_actions_latest_failed_count", 0) > 0
         )
 
-    def _get_stored_token(self) -> str | None:
+    def _get_stored_token(self) -> Optional[str]:
         """Get stored GitHub token."""
         if not CONFIG_FILE.exists():
             return None
@@ -47,7 +48,7 @@ class DownloadJobTracesAction(Action):
             return None
         return None
 
-    def _parse_github_url(self, remote_url: str) -> tuple[str, str] | None:
+    def _parse_github_url(self, remote_url: str) -> Optional[tuple[str, str]]:
         """Parse GitHub URL to extract owner and repo name."""
         match = re.search(r"github\.com[:/]([^/]+)/([^/]+?)(?:\.git)?$", remote_url)
         if match:

@@ -1,6 +1,7 @@
 """Action to create a repository on an existing remote."""
 
 import re
+from typing import Optional
 from rich.console import Console
 from prompt_toolkit import prompt
 from github import Github, GithubException
@@ -57,7 +58,7 @@ class CreateRemoteRepoAction(Action):
             # Better to show the option and let the user decide
             return True
 
-    def _parse_remote_url(self, remote_url: str) -> tuple[str, str, str] | None:
+    def _parse_remote_url(self, remote_url: str) -> Optional[tuple[str, str, str]]:
         """
         Parse remote URL to extract provider, username, and repo name.
         Returns: (provider, username, repo_name) or None

@@ -1,6 +1,7 @@
 """Action to view detailed information about failed GitHub Actions jobs."""
 
 from pathlib import Path
+from typing import Optional
 from rich.console import Console
 from github import Github, GithubException
 from .base import Action
@@ -30,7 +31,7 @@ class ViewFailedJobsAction(Action):
             and state.get_fact("github_actions_latest_failed_count", 0) > 0
         )
 
-    def _get_stored_token(self) -> str | None:
+    def _get_stored_token(self) -> Optional[str]:
         """Get stored GitHub token."""
         if not CONFIG_FILE.exists():
             return None
