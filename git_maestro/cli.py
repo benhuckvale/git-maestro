@@ -13,6 +13,10 @@ from .actions import (
     AddGitignoreAction,
     SetupRemoteAction,
     CreateRemoteRepoAction,
+    FetchGithubActionsAction,
+    RefreshGithubActionsAction,
+    ViewFailedJobsAction,
+    DownloadJobTracesAction,
 )
 
 console = Console()
@@ -21,12 +25,18 @@ console = Console()
 def get_all_actions():
     """Get all available actions."""
     return [
+        # Setup actions
         InitRepoAction(),
         InitialCommitAction(),
         AddReadmeAction(),
         AddGitignoreAction(),
         SetupRemoteAction(),
         CreateRemoteRepoAction(),
+        # Info actions
+        FetchGithubActionsAction(),
+        RefreshGithubActionsAction(),
+        ViewFailedJobsAction(),
+        DownloadJobTracesAction(),
     ]
 
 
@@ -40,10 +50,14 @@ def main():
         if len(sys.argv) > 1:
             path = Path(sys.argv[1]).resolve()
             if not path.exists():
-                console.print(f"[bold red]Error: Path '{path}' does not exist.[/bold red]")
+                console.print(
+                    f"[bold red]Error: Path '{path}' does not exist.[/bold red]"
+                )
                 sys.exit(1)
             if not path.is_dir():
-                console.print(f"[bold red]Error: '{path}' is not a directory.[/bold red]")
+                console.print(
+                    f"[bold red]Error: '{path}' is not a directory.[/bold red]"
+                )
                 sys.exit(1)
 
         # Detect repository state
