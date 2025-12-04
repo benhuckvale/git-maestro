@@ -26,7 +26,9 @@ class InitRepoAction(Action):
     def execute(self, state: RepoState) -> bool:
         """Initialize the git repository."""
         try:
-            console.print(f"[bold green]Initializing git repository in {state.path}...[/bold green]")
+            console.print(
+                f"[bold green]Initializing git repository in {state.path}...[/bold green]"
+            )
 
             # Ask for initial branch name
             console.print("\n[yellow]Select initial branch name:[/yellow]")
@@ -35,7 +37,9 @@ class InitRepoAction(Action):
             console.print("3. develop")
             console.print("4. custom")
 
-            branch_completer = WordCompleter(["1", "2", "3", "4", "main", "master", "develop", "custom"])
+            branch_completer = WordCompleter(
+                ["1", "2", "3", "4", "main", "master", "develop", "custom"]
+            )
             choice = prompt("Choice (1-4): ", completer=branch_completer, default="1")
 
             # Map choice to branch name
@@ -61,7 +65,9 @@ class InitRepoAction(Action):
             console.print("[bold green]✓ Git repository initialized![/bold green]")
 
             # Create initial commit to allow branch renaming
-            console.print(f"[bold cyan]Setting initial branch to '{branch_name}'...[/bold cyan]")
+            console.print(
+                f"[bold cyan]Setting initial branch to '{branch_name}'...[/bold cyan]"
+            )
 
             # Git requires at least one commit to rename branch
             # We'll create an empty initial commit

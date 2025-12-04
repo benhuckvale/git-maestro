@@ -1,6 +1,5 @@
 """Action to add a .gitignore file."""
 
-from pathlib import Path
 from rich.console import Console
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import WordCompleter
@@ -133,7 +132,9 @@ class AddGitignoreAction(Action):
             console.print("2. Node.js")
             console.print("3. Generic")
 
-            template_completer = WordCompleter(["1", "2", "3", "python", "node", "generic"])
+            template_completer = WordCompleter(
+                ["1", "2", "3", "python", "node", "generic"]
+            )
             choice = prompt("Choice (1-3): ", completer=template_completer, default="1")
 
             # Map choice to template
@@ -153,7 +154,9 @@ class AddGitignoreAction(Action):
             gitignore_path = state.path / ".gitignore"
             gitignore_path.write_text(gitignore_content)
 
-            console.print(f"[bold green]✓ .gitignore created with {template_key} template![/bold green]")
+            console.print(
+                f"[bold green]✓ .gitignore created with {template_key} template![/bold green]"
+            )
             return True
 
         except Exception as e:

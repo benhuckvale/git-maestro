@@ -67,20 +67,13 @@ class SSHConfig:
                 # Check if OpenSSH is available
                 # Git for Windows and modern Windows 10/11 include OpenSSH
                 try:
-                    subprocess.run(
-                        ["ssh", "-V"],
-                        capture_output=True,
-                        timeout=2
-                    )
+                    subprocess.run(["ssh", "-V"], capture_output=True, timeout=2)
                 except (subprocess.TimeoutExpired, FileNotFoundError):
                     # OpenSSH not available, skip this method
                     return None
 
             result = subprocess.run(
-                [ssh_cmd, "-G", host],
-                capture_output=True,
-                text=True,
-                timeout=5
+                [ssh_cmd, "-G", host], capture_output=True, text=True, timeout=5
             )
 
             if result.returncode == 0:
@@ -92,7 +85,9 @@ class SSHConfig:
                         # Handle path expansion (~ and environment variables)
                         if self.platform == "Windows":
                             # Windows paths might use %USERPROFILE% or ~
-                            key_path = key_path.replace("%USERPROFILE%", str(Path.home()))
+                            key_path = key_path.replace(
+                                "%USERPROFILE%", str(Path.home())
+                            )
                         key_path = key_path.replace("~", str(Path.home()))
 
                         key_path = Path(key_path)
@@ -101,7 +96,7 @@ class SSHConfig:
                         if key_path.exists():
                             return key_path
 
-        except (subprocess.TimeoutExpired, FileNotFoundError, Exception) as e:
+        except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
             # ssh command not available or failed, will fall back to file parsing
             # This is normal on systems without OpenSSH or using PuTTY
             pass
@@ -111,37 +106,33 @@ class SSHConfig:
     def _parse_ssh_config(self):
         """Parse SSH config file to find identity files for GitHub and GitLab."""
         try:
-            with open(self.config_file, 'r') as f:
+            with open(self.config_file, "r") as f:
                 content = f.read()
 
             # Parse SSH config for GitHub
             github_match = re.search(
-                r'Host\s+github\.com\s*\n((?:\s+\w+.*\n)*)',
-                content,
-                re.MULTILINE
+                r"Host\s+github\.com\s*\n((?:\s+\w+.*\n)*)", content, re.MULTILINE
             )
             if github_match:
                 host_config = github_match.group(1)
-                identity_match = re.search(r'IdentityFile\s+(.+)', host_config)
+                identity_match = re.search(r"IdentityFile\s+(.+)", host_config)
                 if identity_match:
                     key_path = identity_match.group(1).strip()
                     # Expand ~ to home directory
-                    key_path = Path(key_path.replace('~', str(Path.home())))
+                    key_path = Path(key_path.replace("~", str(Path.home())))
                     if key_path.exists():
                         self.github_key = key_path
 
             # Parse SSH config for GitLab
             gitlab_match = re.search(
-                r'Host\s+gitlab\.com\s*\n((?:\s+\w+.*\n)*)',
-                content,
-                re.MULTILINE
+                r"Host\s+gitlab\.com\s*\n((?:\s+\w+.*\n)*)", content, re.MULTILINE
             )
             if gitlab_match:
                 host_config = gitlab_match.group(1)
-                identity_match = re.search(r'IdentityFile\s+(.+)', host_config)
+                identity_match = re.search(r"IdentityFile\s+(.+)", host_config)
                 if identity_match:
                     key_path = identity_match.group(1).strip()
-                    key_path = Path(key_path.replace('~', str(Path.home())))
+                    key_path = Path(key_path.replace("~", str(Path.home())))
                     if key_path.exists():
                         self.gitlab_key = key_path
 
@@ -197,13 +188,17 @@ class SSHConfig:
         """Display SSH key status for the provider."""
         if provider in ["github", "both"]:
             if self.has_github_key():
-                console.print(f"[green]✓ GitHub SSH key found: {self.github_key}[/green]")
+                console.print(
+                    f"[green]✓ GitHub SSH key found: {self.github_key}[/green]"
+                )
             else:
                 console.print("[yellow]⚠ No GitHub SSH key detected[/yellow]")
 
         if provider in ["gitlab", "both"]:
             if self.has_gitlab_key():
-                console.print(f"[green]✓ GitLab SSH key found: {self.gitlab_key}[/green]")
+                console.print(
+                    f"[green]✓ GitLab SSH key found: {self.gitlab_key}[/green]"
+                )
             else:
                 console.print("[yellow]⚠ No GitLab SSH key detected[/yellow]")
 
@@ -263,7 +258,6 @@ class SSHConfig:
 
         try:
             # Get current user's SSH keys from GitLab
-            user = gitlab_client.user
             keys = gitlab_client.user_keys.list()
 
             # Extract just the key part
@@ -282,6 +276,5 @@ class SSHConfig:
 
     def __repr__(self):
         return (
-            f"SSHConfig(github_key={self.github_key}, "
-            f"gitlab_key={self.gitlab_key})"
+            f"SSHConfig(github_key={self.github_key}, " f"gitlab_key={self.gitlab_key})"
         )

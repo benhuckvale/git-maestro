@@ -1,6 +1,5 @@
 """Action to add a README.md file."""
 
-from pathlib import Path
 from rich.console import Console
 from prompt_toolkit import prompt
 from .base import Action
@@ -31,14 +30,18 @@ class AddReadmeAction(Action):
             project_name = state.path.name
 
             # Ask for project description
-            console.print("\n[yellow]Enter a brief description for your project (or press Enter to skip):[/yellow]")
+            console.print(
+                "\n[yellow]Enter a brief description for your project (or press Enter to skip):[/yellow]"
+            )
             description = prompt("Description: ", default="")
 
             # Create README content
             readme_content = f"# {project_name}\n\n"
             if description:
                 readme_content += f"{description}\n\n"
-            readme_content += "## Installation\n\nTODO: Add installation instructions\n\n"
+            readme_content += (
+                "## Installation\n\nTODO: Add installation instructions\n\n"
+            )
             readme_content += "## Usage\n\nTODO: Add usage instructions\n\n"
             readme_content += "## License\n\nTODO: Add license information\n"
 

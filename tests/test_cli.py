@@ -1,7 +1,5 @@
 """Tests for CLI functionality."""
 
-import pytest
-from unittest.mock import patch, MagicMock
 from git_maestro.cli import get_all_actions
 
 
@@ -10,8 +8,8 @@ def test_get_all_actions():
     actions = get_all_actions()
 
     assert len(actions) > 0
-    assert all(hasattr(action, 'is_applicable') for action in actions)
-    assert all(hasattr(action, 'execute') for action in actions)
+    assert all(hasattr(action, "is_applicable") for action in actions)
+    assert all(hasattr(action, "execute") for action in actions)
 
 
 def test_all_actions_are_unique():

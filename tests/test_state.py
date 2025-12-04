@@ -1,7 +1,5 @@
 """Tests for repository state detection."""
 
-import pytest
-from pathlib import Path
 from git_maestro.state import RepoState
 
 

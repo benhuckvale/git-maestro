@@ -1,7 +1,5 @@
 """Integration tests for actions."""
 
-import pytest
-from pathlib import Path
 from git_maestro.state import RepoState
 from git_maestro.actions import (
     InitRepoAction,
@@ -90,11 +88,11 @@ def test_all_actions_have_required_attributes():
     ]
 
     for action in actions:
-        assert hasattr(action, 'name')
-        assert hasattr(action, 'description')
-        assert hasattr(action, 'emoji')
-        assert hasattr(action, 'is_applicable')
-        assert hasattr(action, 'execute')
+        assert hasattr(action, "name")
+        assert hasattr(action, "description")
+        assert hasattr(action, "emoji")
+        assert hasattr(action, "is_applicable")
+        assert hasattr(action, "execute")
         assert callable(action.is_applicable)
         assert callable(action.execute)
         assert callable(action.get_display_name)

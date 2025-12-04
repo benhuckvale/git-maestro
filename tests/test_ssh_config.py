@@ -95,7 +95,7 @@ def test_get_public_key_missing(mock_ssh_dir):
     assert content is None
 
 
-@patch('subprocess.run')
+@patch("subprocess.run")
 def test_ssh_command_detection(mock_run, mock_ssh_dir):
     """Test SSH detection using ssh -G command."""
     # Mock ssh -G output
@@ -114,7 +114,7 @@ def test_ssh_command_detection(mock_run, mock_ssh_dir):
     assert ssh_config.has_github_key() is True
 
 
-@patch('subprocess.run')
+@patch("subprocess.run")
 def test_ssh_command_failure_fallback(mock_run, mock_ssh_dir):
     """Test fallback when ssh -G command fails."""
     # Mock ssh -G to fail

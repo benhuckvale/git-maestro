@@ -27,7 +27,7 @@ def extract_descriptions_from_readme(repo_path: Path) -> List[str]:
         readme_path = repo_path / readme_name
         if readme_path.exists():
             try:
-                content = readme_path.read_text(encoding='utf-8')
+                content = readme_path.read_text(encoding="utf-8")
                 descriptions = _parse_readme_content(content)
                 if descriptions:
                     break
@@ -40,7 +40,7 @@ def extract_descriptions_from_readme(repo_path: Path) -> List[str]:
 def _parse_readme_content(content: str) -> List[str]:
     """Parse README content to extract descriptions."""
     descriptions = []
-    lines = content.split('\n')
+    lines = content.split("\n")
 
     # Remove empty lines at the start
     while lines and not lines[0].strip():
@@ -57,15 +57,15 @@ def _parse_readme_content(content: str) -> List[str]:
         if not stripped:
             if paragraph_lines:
                 break
-        elif not stripped.startswith('#') and not stripped.startswith('```'):
+        elif not stripped.startswith("#") and not stripped.startswith("```"):
             # Skip markdown headings and code blocks
             paragraph_lines.append(stripped)
 
     if paragraph_lines:
-        paragraph = ' '.join(paragraph_lines)
+        paragraph = " ".join(paragraph_lines)
         # Clean up markdown formatting
-        paragraph = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', paragraph)  # Remove links
-        paragraph = re.sub(r'[*_`]', '', paragraph)  # Remove bold/italic/code markers
+        paragraph = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", paragraph)  # Remove links
+        paragraph = re.sub(r"[*_`]", "", paragraph)  # Remove bold/italic/code markers
         if len(paragraph) <= 300 and len(paragraph) > 10:
             descriptions.append(paragraph)
 
@@ -73,11 +73,11 @@ def _parse_readme_content(content: str) -> List[str]:
     if paragraph_lines:
         first_line = paragraph_lines[0]
         # Try to find first sentence
-        match = re.match(r'^([^.!?]+[.!?])', first_line)
+        match = re.match(r"^([^.!?]+[.!?])", first_line)
         if match:
             first_sentence = match.group(1).strip()
-            first_sentence = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', first_sentence)
-            first_sentence = re.sub(r'[*_`]', '', first_sentence)
+            first_sentence = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", first_sentence)
+            first_sentence = re.sub(r"[*_`]", "", first_sentence)
             if len(first_sentence) <= 200 and len(first_sentence) > 10:
                 if first_sentence not in descriptions:
                     descriptions.append(first_sentence)
@@ -93,11 +93,7 @@ def generate_description_with_ai(repo_path: Path, repo_name: str) -> Optional[st
     """
     try:
         # Check if claude CLI is available
-        result = subprocess.run(
-            ["claude", "--version"],
-            capture_output=True,
-            timeout=2
-        )
+        result = subprocess.run(["claude", "--version"], capture_output=True, timeout=2)
         if result.returncode != 0:
             return None
     except (subprocess.TimeoutExpired, FileNotFoundError):
@@ -109,7 +105,9 @@ def generate_description_with_ai(repo_path: Path, repo_name: str) -> Optional[st
         readme_path = repo_path / readme_name
         if readme_path.exists():
             try:
-                readme_content = readme_path.read_text(encoding='utf-8')[:1000]  # First 1000 chars
+                readme_content = readme_path.read_text(encoding="utf-8")[
+                    :1000
+                ]  # First 1000 chars
                 break
             except Exception:
                 continue
@@ -137,13 +135,13 @@ Return ONLY the description text, nothing else."""
             input=prompt,
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
         )
 
         if result.returncode == 0:
             description = result.stdout.strip()
             # Clean up any markdown or extra formatting
-            description = re.sub(r'[*_`"]', '', description)
+            description = re.sub(r'[*_`"]', "", description)
             description = description.strip()
             if len(description) <= 300 and len(description) > 10:
                 return description
@@ -153,7 +151,9 @@ Return ONLY the description text, nothing else."""
     return None
 
 
-def get_description_options(repo_path: Path, repo_name: str, use_ai: bool = True) -> List[tuple[str, str]]:
+def get_description_options(
+    repo_path: Path, repo_name: str, use_ai: bool = True
+) -> List[tuple[str, str]]:
     """
     Get description options for a repository.
 

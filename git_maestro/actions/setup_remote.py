@@ -37,7 +37,7 @@ class SetupRemoteAction(Action):
         if not CONFIG_FILE.exists():
             return None
         try:
-            with open(CONFIG_FILE, 'r') as f:
+            with open(CONFIG_FILE, "r") as f:
                 for line in f:
                     if line.startswith(f"{provider}="):
                         return line.split("=", 1)[1].strip()
@@ -56,10 +56,10 @@ class SetupRemoteAction(Action):
         tokens = {}
         if CONFIG_FILE.exists():
             try:
-                with open(CONFIG_FILE, 'r') as f:
+                with open(CONFIG_FILE, "r") as f:
                     for line in f:
-                        if '=' in line:
-                            key, value = line.strip().split('=', 1)
+                        if "=" in line:
+                            key, value = line.strip().split("=", 1)
                             tokens[key] = value
             except Exception:
                 pass
@@ -69,7 +69,7 @@ class SetupRemoteAction(Action):
 
         # Write back
         try:
-            with open(CONFIG_FILE, 'w') as f:
+            with open(CONFIG_FILE, "w") as f:
                 for key, value in tokens.items():
                     f.write(f"{key}={value}\n")
             # Make file readable only by user
@@ -88,25 +88,43 @@ class SetupRemoteAction(Action):
                 return stored_token
 
         # Prompt for new token with detailed instructions
-        console.print(f"\n[yellow]A {provider.title()} Personal Access Token is required to create repositories via the API.[/yellow]")
-        console.print(f"[yellow]This is different from your SSH key (used for git push/pull).[/yellow]\n")
+        console.print(
+            f"\n[yellow]A {provider.title()} Personal Access Token is required to create repositories via the API.[/yellow]"
+        )
+        console.print(
+            "[yellow]This is different from your SSH key (used for git push/pull).[/yellow]\n"
+        )
 
         if provider == "github":
             console.print("[cyan]To create a GitHub Personal Access Token:[/cyan]")
-            console.print("  [dim]1.[/dim] Go to [blue]https://github.com/settings/tokens[/blue]")
-            console.print("  [dim]2.[/dim] Click 'Generate new token' → 'Generate new token (classic)'")
+            console.print(
+                "  [dim]1.[/dim] Go to [blue]https://github.com/settings/tokens[/blue]"
+            )
+            console.print(
+                "  [dim]2.[/dim] Click 'Generate new token' → 'Generate new token (classic)'"
+            )
             console.print("  [dim]3.[/dim] Give it a name like 'git-maestro'")
-            console.print("  [dim]4.[/dim] Select scope: [bold]repo[/bold] (full control of private repositories)")
+            console.print(
+                "  [dim]4.[/dim] Select scope: [bold]repo[/bold] (full control of private repositories)"
+            )
             console.print("  [dim]5.[/dim] Click 'Generate token'")
-            console.print("  [dim]6.[/dim] Copy the token (starts with [dim]ghp_...[/dim])")
+            console.print(
+                "  [dim]6.[/dim] Copy the token (starts with [dim]ghp_...[/dim])"
+            )
         else:  # gitlab
             console.print("[cyan]To create a GitLab Personal Access Token:[/cyan]")
-            console.print("  [dim]1.[/dim] Go to [blue]https://gitlab.com/-/profile/personal_access_tokens[/blue]")
+            console.print(
+                "  [dim]1.[/dim] Go to [blue]https://gitlab.com/-/profile/personal_access_tokens[/blue]"
+            )
             console.print("  [dim]2.[/dim] Click 'Add new token'")
             console.print("  [dim]3.[/dim] Give it a name like 'git-maestro'")
-            console.print("  [dim]4.[/dim] Select scope: [bold]api[/bold] (full API access)")
+            console.print(
+                "  [dim]4.[/dim] Select scope: [bold]api[/bold] (full API access)"
+            )
             console.print("  [dim]5.[/dim] Click 'Create personal access token'")
-            console.print("  [dim]6.[/dim] Copy the token (starts with [dim]glpat-...[/dim])")
+            console.print(
+                "  [dim]6.[/dim] Copy the token (starts with [dim]glpat-...[/dim])"
+            )
 
         console.print()
         token = prompt("Enter token: ", is_password=True)
@@ -134,7 +152,9 @@ class SetupRemoteAction(Action):
                 display_desc = desc if len(desc) <= 80 else desc[:77] + "..."
                 console.print(f"  [dim]{i}.[/dim] [{label}] {display_desc}")
 
-            console.print(f"  [dim]{len(options) + 1}.[/dim] [Enter custom description]")
+            console.print(
+                f"  [dim]{len(options) + 1}.[/dim] [Enter custom description]"
+            )
             console.print(f"  [dim]{len(options) + 2}.[/dim] [Skip - no description]")
 
             # Build completer
@@ -142,7 +162,9 @@ class SetupRemoteAction(Action):
             completer = WordCompleter(choices)
 
             # Get user choice
-            choice = prompt(f"\nChoice (1-{len(options) + 2}): ", completer=completer, default="1")
+            choice = prompt(
+                f"\nChoice (1-{len(options) + 2}): ", completer=completer, default="1"
+            )
 
             try:
                 choice_num = int(choice)
@@ -174,11 +196,12 @@ class SetupRemoteAction(Action):
             console.print("2. GitLab (will create repository via API)")
             console.print("3. Other (just add remote URL, won't create repository)")
 
-            provider_completer = WordCompleter(["1", "2", "3", "github", "gitlab", "other"])
-            provider_choice = prompt("Choice (1-3): ", completer=provider_completer, default="1")
-
-            remote_url = None
-            username = None
+            provider_completer = WordCompleter(
+                ["1", "2", "3", "github", "gitlab", "other"]
+            )
+            provider_choice = prompt(
+                "Choice (1-3): ", completer=provider_completer, default="1"
+            )
 
             # Handle GitHub
             if provider_choice in ["1", "github"]:
@@ -215,7 +238,9 @@ class SetupRemoteAction(Action):
             console.print("\n[cyan]Checking SSH configuration...[/cyan]")
             ssh_config = SSHConfig()
             if ssh_config.has_github_key():
-                console.print(f"[green]✓ SSH key found: {ssh_config.github_key}[/green]")
+                console.print(
+                    f"[green]✓ SSH key found: {ssh_config.github_key}[/green]"
+                )
 
                 # Verify if key is added to GitHub account
                 is_verified, message = ssh_config.verify_key_on_github(g)
@@ -223,12 +248,22 @@ class SetupRemoteAction(Action):
                     console.print(f"[green]✓ {message}[/green]")
                 else:
                     console.print(f"[yellow]⚠ {message}[/yellow]")
-                    console.print(f"[dim]Add your SSH key at: https://github.com/settings/keys[/dim]")
-                    console.print(f"[dim]Public key: {ssh_config.get_github_public_key()}[/dim]")
+                    console.print(
+                        "[dim]Add your SSH key at: https://github.com/settings/keys[/dim]"
+                    )
+                    console.print(
+                        f"[dim]Public key: {ssh_config.get_github_public_key()}[/dim]"
+                    )
             else:
-                console.print("[yellow]⚠ No GitHub SSH key detected in ~/.ssh/[/yellow]")
-                console.print("[dim]You may want to set up SSH keys for easier authentication[/dim]")
-                console.print("[dim]Guide: https://docs.github.com/en/authentication/connecting-to-github-with-ssh[/dim]")
+                console.print(
+                    "[yellow]⚠ No GitHub SSH key detected in ~/.ssh/[/yellow]"
+                )
+                console.print(
+                    "[dim]You may want to set up SSH keys for easier authentication[/dim]"
+                )
+                console.print(
+                    "[dim]Guide: https://docs.github.com/en/authentication/connecting-to-github-with-ssh[/dim]"
+                )
 
             # Get repository details
             console.print("\n[yellow]Enter the repository name:[/yellow]")
@@ -241,7 +276,9 @@ class SetupRemoteAction(Action):
             console.print("1. Public")
             console.print("2. Private")
             visibility_completer = WordCompleter(["1", "2", "public", "private"])
-            visibility_choice = prompt("Visibility (1-2): ", completer=visibility_completer, default="1")
+            visibility_choice = prompt(
+                "Visibility (1-2): ", completer=visibility_completer, default="1"
+            )
 
             is_private = visibility_choice in ["2", "private"]
 
@@ -252,12 +289,16 @@ class SetupRemoteAction(Action):
                     name=repo_name,
                     description=description,
                     private=is_private,
-                    auto_init=False
+                    auto_init=False,
                 )
-                console.print(f"[bold green]✓ Repository created: {github_repo.html_url}[/bold green]")
+                console.print(
+                    f"[bold green]✓ Repository created: {github_repo.html_url}[/bold green]"
+                )
             except GithubException as e:
                 if e.status == 422:
-                    console.print(f"[yellow]Repository '{repo_name}' already exists[/yellow]")
+                    console.print(
+                        f"[yellow]Repository '{repo_name}' already exists[/yellow]"
+                    )
                     github_repo = user.get_repo(repo_name)
                 else:
                     raise
@@ -265,13 +306,17 @@ class SetupRemoteAction(Action):
             # Add remote
             remote_url = github_repo.ssh_url
             origin = state.repo.create_remote("origin", remote_url)
-            console.print(f"[bold green]✓ Remote 'origin' added: {remote_url}[/bold green]")
+            console.print(
+                f"[bold green]✓ Remote 'origin' added: {remote_url}[/bold green]"
+            )
 
             # Push if there are commits
             if state.has_commits:
                 return self._push_to_remote(state, origin)
 
-            console.print("[yellow]No commits yet - add some commits and push manually later[/yellow]")
+            console.print(
+                "[yellow]No commits yet - add some commits and push manually later[/yellow]"
+            )
             return True
 
         except GithubException as e:
@@ -295,7 +340,9 @@ class SetupRemoteAction(Action):
             console.print("\n[cyan]Checking SSH configuration...[/cyan]")
             ssh_config = SSHConfig()
             if ssh_config.has_gitlab_key():
-                console.print(f"[green]✓ SSH key found: {ssh_config.gitlab_key}[/green]")
+                console.print(
+                    f"[green]✓ SSH key found: {ssh_config.gitlab_key}[/green]"
+                )
 
                 # Verify if key is added to GitLab account
                 is_verified, message = ssh_config.verify_key_on_gitlab(gl)
@@ -303,12 +350,22 @@ class SetupRemoteAction(Action):
                     console.print(f"[green]✓ {message}[/green]")
                 else:
                     console.print(f"[yellow]⚠ {message}[/yellow]")
-                    console.print(f"[dim]Add your SSH key at: https://gitlab.com/-/profile/keys[/dim]")
-                    console.print(f"[dim]Public key: {ssh_config.get_gitlab_public_key()}[/dim]")
+                    console.print(
+                        "[dim]Add your SSH key at: https://gitlab.com/-/profile/keys[/dim]"
+                    )
+                    console.print(
+                        f"[dim]Public key: {ssh_config.get_gitlab_public_key()}[/dim]"
+                    )
             else:
-                console.print("[yellow]⚠ No GitLab SSH key detected in ~/.ssh/[/yellow]")
-                console.print("[dim]You may want to set up SSH keys for easier authentication[/dim]")
-                console.print("[dim]Guide: https://docs.gitlab.com/ee/user/ssh.html[/dim]")
+                console.print(
+                    "[yellow]⚠ No GitLab SSH key detected in ~/.ssh/[/yellow]"
+                )
+                console.print(
+                    "[dim]You may want to set up SSH keys for easier authentication[/dim]"
+                )
+                console.print(
+                    "[dim]Guide: https://docs.gitlab.com/ee/user/ssh.html[/dim]"
+                )
 
             # Get repository details
             console.print("\n[yellow]Enter the repository name:[/yellow]")
@@ -321,8 +378,12 @@ class SetupRemoteAction(Action):
             console.print("1. Public")
             console.print("2. Internal (visible to authenticated users)")
             console.print("3. Private")
-            visibility_completer = WordCompleter(["1", "2", "3", "public", "internal", "private"])
-            visibility_choice = prompt("Visibility (1-3): ", completer=visibility_completer, default="1")
+            visibility_completer = WordCompleter(
+                ["1", "2", "3", "public", "internal", "private"]
+            )
+            visibility_choice = prompt(
+                "Visibility (1-3): ", completer=visibility_completer, default="1"
+            )
 
             # Map choice to GitLab visibility value
             visibility_map = {
@@ -338,37 +399,51 @@ class SetupRemoteAction(Action):
             # Create repository
             console.print(f"\n[cyan]Creating GitLab repository '{repo_name}'...[/cyan]")
             try:
-                project = gl.projects.create({
-                    'name': repo_name,
-                    'description': description,
-                    'visibility': visibility,
-                    'initialize_with_readme': False
-                })
-                console.print(f"[bold green]✓ Repository created: {project.web_url}[/bold green]")
+                project = gl.projects.create(
+                    {
+                        "name": repo_name,
+                        "description": description,
+                        "visibility": visibility,
+                        "initialize_with_readme": False,
+                    }
+                )
+                console.print(
+                    f"[bold green]✓ Repository created: {project.web_url}[/bold green]"
+                )
             except gitlab.exceptions.GitlabCreateError as e:
                 if "has already been taken" in str(e):
-                    console.print(f"[yellow]Repository '{repo_name}' already exists[/yellow]")
+                    console.print(
+                        f"[yellow]Repository '{repo_name}' already exists[/yellow]"
+                    )
                     projects = gl.projects.list(search=repo_name, owned=True)
                     project = next((p for p in projects if p.name == repo_name), None)
                     if not project:
-                        raise Exception(f"Could not find existing project '{repo_name}'")
+                        raise Exception(
+                            f"Could not find existing project '{repo_name}'"
+                        )
                 else:
                     raise
 
             # Add remote
             remote_url = project.ssh_url_to_repo
             origin = state.repo.create_remote("origin", remote_url)
-            console.print(f"[bold green]✓ Remote 'origin' added: {remote_url}[/bold green]")
+            console.print(
+                f"[bold green]✓ Remote 'origin' added: {remote_url}[/bold green]"
+            )
 
             # Push if there are commits
             if state.has_commits:
                 return self._push_to_remote(state, origin)
 
-            console.print("[yellow]No commits yet - add some commits and push manually later[/yellow]")
+            console.print(
+                "[yellow]No commits yet - add some commits and push manually later[/yellow]"
+            )
             return True
 
         except gitlab.exceptions.GitlabAuthenticationError:
-            console.print("[bold red]✗ GitLab authentication failed - check your token[/bold red]")
+            console.print(
+                "[bold red]✗ GitLab authentication failed - check your token[/bold red]"
+            )
             return False
         except Exception as e:
             console.print(f"[bold red]✗ GitLab error: {e}[/bold red]")
@@ -383,7 +458,9 @@ class SetupRemoteAction(Action):
         origin = state.repo.create_remote("origin", remote_url)
         console.print(f"[bold green]✓ Remote 'origin' added: {remote_url}[/bold green]")
 
-        console.print("\n[yellow]Note: Make sure the repository exists on the remote server[/yellow]")
+        console.print(
+            "\n[yellow]Note: Make sure the repository exists on the remote server[/yellow]"
+        )
 
         # Ask if user wants to push
         if state.has_commits:
@@ -401,10 +478,16 @@ class SetupRemoteAction(Action):
                 console.print("[cyan]Pushing to remote...[/cyan]")
                 branch = state.repo.active_branch.name
                 origin.push(refspec=f"{branch}:{branch}", set_upstream=True)
-                console.print(f"[bold green]✓ Pushed to remote successfully![/bold green]")
+                console.print(
+                    "[bold green]✓ Pushed to remote successfully![/bold green]"
+                )
             except Exception as push_error:
                 console.print(f"[bold red]✗ Push failed: {push_error}[/bold red]")
-                console.print("[yellow]You can push manually later with: git push -u origin {branch}[/yellow]".format(branch=branch))
+                console.print(
+                    "[yellow]You can push manually later with: git push -u origin {branch}[/yellow]".format(
+                        branch=branch
+                    )
+                )
                 return False
 
         return True
