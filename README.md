@@ -68,6 +68,57 @@ Git Maestro will:
 - **Add .gitignore** 🚫: Add a .gitignore file with templates for Python, Node.js, or Generic projects
 - **Setup Remote Repository** 🌐: Configure GitHub or GitLab as your remote origin
 
+### MCP Server for AI Assistants
+
+Git Maestro runs as a **Model Context Protocol (MCP) stdio server**, enabling AI assistants (like Claude) to access git and GitHub Actions data **outside their sandboxes**.
+
+#### What This Enables
+
+AI assistants can now autonomously:
+- **Monitor CI/CD**: Check GitHub Actions job status without downloading full logs
+- **Debug Failures**: Fetch job logs and analyze test failures
+- **Create Closed Loops**: Make code fixes, push commits, and monitor new CI runs until tests pass
+- **Understand Pipeline Complexity**: See job dependencies and understand which failures are root causes vs cascading
+
+#### Example Workflow
+
+```bash
+# Start the MCP server
+git-maestro mcp
+```
+
+An AI assistant can then:
+1. Make code changes and push them
+2. Poll `check_github_actions_job_status()` to wait for CI to complete
+3. Fetch failing job logs with `download_github_actions_job_logs()`
+4. Analyze failures and make targeted fixes
+5. Loop until all tests pass—without any human intervention
+
+#### Available MCP Tools
+
+- `list_github_actions_runs(count)` - Get recent workflow runs
+- `get_github_actions_run_jobs(run_id)` - View job structure and details
+- `check_github_actions_job_status(run_id, [job_id])` - Lightweight polling (fast status checks)
+- `download_github_actions_job_logs(run_id, job_id)` - Fetch logs for specific jobs
+- `download_job_traces()` - Download all failed job logs from the latest run
+
+#### Configuration
+
+Add to your Claude Code `mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "git-maestro": {
+      "command": "git-maestro",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+Then use `git-maestro mcp` in your Claude session to enable these tools.
+
 ## Requirements
 
 - Python >= 3.9

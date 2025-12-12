@@ -11,6 +11,7 @@ from .fetch_github_actions import FetchGithubActionsAction
 from .refresh_github_actions import RefreshGithubActionsAction
 from .view_failed_jobs import ViewFailedJobsAction
 from .download_job_traces import DownloadJobTracesAction
+from .get_github_actions_logs import GetGithubActionsLogsAction
 
 __all__ = [
     "Action",
@@ -24,4 +25,5 @@ __all__ = [
     "RefreshGithubActionsAction",
     "ViewFailedJobsAction",
     "DownloadJobTracesAction",
+    "GetGithubActionsLogsAction",
 ]

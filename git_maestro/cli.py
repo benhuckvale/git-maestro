@@ -18,6 +18,7 @@ from .actions import (
     RefreshGithubActionsAction,
     ViewFailedJobsAction,
     DownloadJobTracesAction,
+    GetGithubActionsLogsAction,
 )
 
 console = Console()
@@ -38,6 +39,7 @@ def get_all_actions():
         RefreshGithubActionsAction(),
         ViewFailedJobsAction(),
         DownloadJobTracesAction(),
+        GetGithubActionsLogsAction(),
     ]
 
 

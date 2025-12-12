@@ -7,7 +7,7 @@ from typing import Any
 import inspect
 
 from git_maestro.state import RepoState
-from git_maestro.actions import DownloadJobTracesAction
+from git_maestro.actions import DownloadJobTracesAction, GetGithubActionsLogsAction
 
 
 class MCPServer:
@@ -30,7 +30,83 @@ class MCPServer:
                     },
                     "required": [],
                 },
-            }
+            },
+            "list_github_actions_runs": {
+                "description": "List recent GitHub Actions workflow runs",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "count": {
+                            "type": "integer",
+                            "description": "Number of recent runs to list (default: 10, max: 50)",
+                        },
+                        "repo_path": {
+                            "type": "string",
+                            "description": "Path to the git repository (defaults to current directory)",
+                        },
+                    },
+                    "required": [],
+                },
+            },
+            "get_github_actions_run_jobs": {
+                "description": "Get detailed job information for a specific GitHub Actions run",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "run_id": {
+                            "type": "integer",
+                            "description": "GitHub Actions run ID",
+                        },
+                        "repo_path": {
+                            "type": "string",
+                            "description": "Path to the git repository (defaults to current directory)",
+                        },
+                    },
+                    "required": ["run_id"],
+                },
+            },
+            "download_github_actions_job_logs": {
+                "description": "Download logs from a specific job in a specific GitHub Actions run",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "run_id": {
+                            "type": "integer",
+                            "description": "GitHub Actions run ID",
+                        },
+                        "job_id": {
+                            "type": "integer",
+                            "description": "Specific job ID to download logs from",
+                        },
+                        "repo_path": {
+                            "type": "string",
+                            "description": "Path to the git repository (defaults to current directory)",
+                        },
+                    },
+                    "required": ["run_id", "job_id"],
+                },
+            },
+            "check_github_actions_job_status": {
+                "description": "Check the status of a GitHub Actions run or specific job without downloading logs",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "run_id": {
+                            "type": "integer",
+                            "description": "GitHub Actions run ID",
+                        },
+                        "job_id": {
+                            "type": "integer",
+                            "description": "Optional: specific job ID to check. If not provided, checks the run status.",
+                        },
+                        "repo_path": {
+                            "type": "string",
+                            "description": "Path to the git repository (defaults to current directory)",
+                        },
+                    },
+                    "required": ["run_id"],
+                },
+            },
         }
 
     def _check_dev_installation_safety(self) -> None:
@@ -195,6 +271,14 @@ class MCPServer:
 
         if tool_name == "download_job_traces":
             return self.call_download_job_traces(tool_input, msg_id)
+        elif tool_name == "list_github_actions_runs":
+            return self.call_list_github_actions_runs(tool_input, msg_id)
+        elif tool_name == "get_github_actions_run_jobs":
+            return self.call_get_github_actions_run_jobs(tool_input, msg_id)
+        elif tool_name == "download_github_actions_job_logs":
+            return self.call_download_github_actions_job_logs(tool_input, msg_id)
+        elif tool_name == "check_github_actions_job_status":
+            return self.call_check_github_actions_job_status(tool_input, msg_id)
         else:
             return {
                 "jsonrpc": "2.0",
@@ -262,6 +346,247 @@ class MCPServer:
                     },
                     "id": msg_id,
                 }
+
+        except Exception as e:
+            return {
+                "jsonrpc": "2.0",
+                "error": {
+                    "code": -32603,
+                    "message": f"Error executing tool: {str(e)}",
+                },
+                "id": msg_id,
+            }
+
+    def call_list_github_actions_runs(
+        self, tool_input: dict[str, Any], msg_id: Any
+    ) -> dict[str, Any]:
+        """List recent GitHub Actions runs."""
+        try:
+            repo_path = tool_input.get("repo_path", ".")
+            count = min(tool_input.get("count", 10), 50)  # Cap at 50
+            path = Path(repo_path).resolve()
+
+            # Get the current state
+            state = RepoState(path)
+
+            # Create and execute the action
+            action = GetGithubActionsLogsAction()
+            runs = action.list_recent_runs(state, count)
+
+            if runs is None:
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32603,
+                        "message": "Failed to list GitHub Actions runs",
+                    },
+                    "id": msg_id,
+                }
+
+            return {
+                "jsonrpc": "2.0",
+                "result": {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": f"Found {len(runs)} recent runs",
+                        },
+                        {
+                            "type": "text",
+                            "text": "runs: " + json.dumps(runs, indent=2),
+                        },
+                    ],
+                },
+                "id": msg_id,
+            }
+
+        except Exception as e:
+            return {
+                "jsonrpc": "2.0",
+                "error": {
+                    "code": -32603,
+                    "message": f"Error executing tool: {str(e)}",
+                },
+                "id": msg_id,
+            }
+
+    def call_get_github_actions_run_jobs(
+        self, tool_input: dict[str, Any], msg_id: Any
+    ) -> dict[str, Any]:
+        """Get jobs for a specific GitHub Actions run."""
+        try:
+            run_id = tool_input.get("run_id")
+            if not run_id:
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32602,
+                        "message": "Missing required parameter: run_id",
+                    },
+                    "id": msg_id,
+                }
+
+            repo_path = tool_input.get("repo_path", ".")
+            path = Path(repo_path).resolve()
+
+            # Get the current state
+            state = RepoState(path)
+
+            # Create and execute the action
+            action = GetGithubActionsLogsAction()
+            jobs = action.get_run_jobs(state, run_id)
+
+            if jobs is None:
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32603,
+                        "message": f"Failed to get jobs for run {run_id}",
+                    },
+                    "id": msg_id,
+                }
+
+            return {
+                "jsonrpc": "2.0",
+                "result": {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": f"Found {len(jobs)} jobs in run {run_id}",
+                        },
+                        {
+                            "type": "text",
+                            "text": "jobs: " + json.dumps(jobs, indent=2),
+                        },
+                    ],
+                },
+                "id": msg_id,
+            }
+
+        except Exception as e:
+            return {
+                "jsonrpc": "2.0",
+                "error": {
+                    "code": -32603,
+                    "message": f"Error executing tool: {str(e)}",
+                },
+                "id": msg_id,
+            }
+
+    def call_download_github_actions_job_logs(
+        self, tool_input: dict[str, Any], msg_id: Any
+    ) -> dict[str, Any]:
+        """Download logs for a specific job."""
+        try:
+            run_id = tool_input.get("run_id")
+            job_id = tool_input.get("job_id")
+
+            if not run_id or not job_id:
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32602,
+                        "message": "Missing required parameters: run_id, job_id",
+                    },
+                    "id": msg_id,
+                }
+
+            repo_path = tool_input.get("repo_path", ".")
+            path = Path(repo_path).resolve()
+
+            # Get the current state
+            state = RepoState(path)
+
+            # Create and execute the action
+            action = GetGithubActionsLogsAction()
+            log_file = action.download_job_logs(state, run_id, job_id)
+
+            if log_file:
+                return {
+                    "jsonrpc": "2.0",
+                    "result": {
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": f"Successfully downloaded logs for job {job_id} from run {run_id}",
+                            },
+                            {
+                                "type": "text",
+                                "text": f"Log file: {log_file}",
+                            },
+                        ],
+                    },
+                    "id": msg_id,
+                }
+            else:
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32603,
+                        "message": f"Failed to download logs for job {job_id}",
+                    },
+                    "id": msg_id,
+                }
+
+        except Exception as e:
+            return {
+                "jsonrpc": "2.0",
+                "error": {
+                    "code": -32603,
+                    "message": f"Error executing tool: {str(e)}",
+                },
+                "id": msg_id,
+            }
+
+    def call_check_github_actions_job_status(
+        self, tool_input: dict[str, Any], msg_id: Any
+    ) -> dict[str, Any]:
+        """Check the status of a job or run without downloading logs."""
+        try:
+            run_id = tool_input.get("run_id")
+            if not run_id:
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32602,
+                        "message": "Missing required parameter: run_id",
+                    },
+                    "id": msg_id,
+                }
+
+            job_id = tool_input.get("job_id")
+            repo_path = tool_input.get("repo_path", ".")
+            path = Path(repo_path).resolve()
+
+            # Get the current state
+            state = RepoState(path)
+
+            # Create and execute the action
+            action = GetGithubActionsLogsAction()
+            status = action.check_job_status(state, run_id, job_id)
+
+            if status is None:
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32603,
+                        "message": f"Failed to check status for run {run_id}" + (f" job {job_id}" if job_id else ""),
+                    },
+                    "id": msg_id,
+                }
+
+            return {
+                "jsonrpc": "2.0",
+                "result": {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "status: " + json.dumps(status, indent=2),
+                        }
+                    ],
+                },
+                "id": msg_id,
+            }
 
         except Exception as e:
             return {
