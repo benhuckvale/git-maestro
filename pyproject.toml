@@ -31,4 +31,25 @@ dev = [
     "pytest>=7.4.3",
     "black>=23.12.1",
     "ruff>=0.1.8",
+    "build>=1.0.0",
 ]
+deploy_test = [
+    "pypiserver>=2.4.0",
+    "passlib>=1.7.4",
+]
+deploy = [
+    "twine>=4.0.0",
+    "build>=1.0.0",
+]
+
+[tool.pdm.scripts]
+test = "pytest"
+test-verbose = "pytest -v"
+test-coverage = "pytest --cov=git_maestro"
+lint = "ruff check ."
+format = "black ."
+build = "python -m build"
+test-install = {shell = "bash scripts/test-package-install.sh", help = "Test package installation and imports"}
+pypi-local = {shell = "bash scripts/start-local-pypi.sh", help = "Start local PyPI server for testing"}
+install-local = {shell = "bash scripts/install-from-local-pypi.sh", help = "Install from local PyPI server"}
+publish-test = {shell = "bash scripts/publish-to-pypiserver.sh", help = "Publish to local PyPI server"}

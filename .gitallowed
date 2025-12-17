@@ -1,0 +1,7 @@
+# False positives for git-secrets
+# These are test/local placeholders in deployment scripts, not real credentials
+
+# Local PyPI test server credentials in scripts/publish-to-pypiserver.sh
+# (This is a local testing script with placeholder credentials)
+password = localpass123
+username = localuser
