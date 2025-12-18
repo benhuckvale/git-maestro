@@ -2,7 +2,7 @@
 
 A slick CLI tool to manage and progress git repositories with interactive menus.
 
-Git Maestro observes the current state of your git repository and presents you with context-aware actions to help you quickly set up and manage your projects. No more typing countless git commands - just select from a beautiful menu and let Git Maestro handle the rest!
+Git Maestro observes the current state of your git repository, both local and remote, and presents you with context-aware actions to help you quickly set up and manage your projects. No more typing countless git commands and switching in and out of the browser - just select from a beautiful menu and let Git Maestro handle the rest!
 
 ## Features
 
@@ -11,6 +11,7 @@ Git Maestro observes the current state of your git repository and presents you w
 - 🔧 **Modular Design**: Easy to extend with new actions
 - ⚡ **Fast Setup**: Quickly initialize repos, add READMEs, .gitignore files, and remote repositories
 - 🎭 **Works as Git Plugin**: Can be called as `git maestro` after installation
+- 🔌 **MCP Integration**: Seamlessly works with Model Context Protocol for AI-powered workflows
 
 ## Installation
 
