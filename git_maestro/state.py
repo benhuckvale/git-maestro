@@ -5,6 +5,9 @@ from typing import Optional
 import git
 from git.exc import InvalidGitRepositoryError
 
+CONFIG_DIR = Path.home() / ".config" / "git-maestro"
+CONFIG_FILE = CONFIG_DIR / "tokens.conf"
+
 
 class RepoState:
     """Represents the current state of a directory/git repository."""
@@ -104,7 +107,7 @@ class RepoState:
             del self.facts[key]
 
     def get_remote_type(self) -> Optional[str]:
-        """Determine the type of remote (github, gitlab, etc.)."""
+        """Determine the type of remote (github, gitlab, azure, etc.)."""
         if not self.has_remote or not self.remote_url:
             return None
 
@@ -113,8 +116,30 @@ class RepoState:
             return "github"
         elif "gitlab.com" in remote_lower or "gitlab" in remote_lower:
             return "gitlab"
+        elif "dev.azure.com" in remote_lower or "ssh.dev.azure.com" in remote_lower or "visualstudio.com" in remote_lower:
+            return "azure"
         else:
             return "unknown"
+
+    def has_token_for_remote(self) -> bool:
+        """Check if we have a stored token for the current remote type."""
+        remote_type = self.get_remote_type()
+        if not remote_type:
+            return False
+
+        if not CONFIG_FILE.exists():
+            return False
+
+        try:
+            with open(CONFIG_FILE, "r") as f:
+                for line in f:
+                    if line.startswith(f"{remote_type}="):
+                        token = line.split("=", 1)[1].strip()
+                        return bool(token)
+        except Exception:
+            pass
+
+        return False
 
     def __repr__(self):
         return (

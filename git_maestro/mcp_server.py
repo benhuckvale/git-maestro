@@ -7,7 +7,11 @@ from typing import Any
 import inspect
 
 from git_maestro.state import RepoState
-from git_maestro.actions import DownloadJobTracesAction, GetGithubActionsLogsAction
+from git_maestro.actions import (
+    DownloadJobTracesAction,
+    GetGithubActionsLogsAction,
+    GetAzurePipelinesAction,
+)
 
 
 class MCPServer:
@@ -105,6 +109,94 @@ class MCPServer:
                         },
                     },
                     "required": ["run_id"],
+                },
+            },
+            "list_azure_pipelines_runs": {
+                "description": "List recent Azure DevOps Pipeline runs",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "count": {
+                            "type": "integer",
+                            "description": "Number of recent runs to list (default: 10, max: 50)",
+                        },
+                        "repo_path": {
+                            "type": "string",
+                            "description": "Path to the git repository (defaults to current directory)",
+                        },
+                    },
+                    "required": [],
+                },
+            },
+            "get_azure_pipelines_run_stages": {
+                "description": "Get detailed stage information for a specific Azure DevOps Pipeline run",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "pipeline_id": {
+                            "type": "integer",
+                            "description": "Azure DevOps Pipeline ID",
+                        },
+                        "run_id": {
+                            "type": "integer",
+                            "description": "Azure DevOps Pipeline run ID",
+                        },
+                        "repo_path": {
+                            "type": "string",
+                            "description": "Path to the git repository (defaults to current directory)",
+                        },
+                    },
+                    "required": ["pipeline_id", "run_id"],
+                },
+            },
+            "download_azure_pipelines_stage_logs": {
+                "description": "Download logs from a specific stage in an Azure DevOps Pipeline run",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "pipeline_id": {
+                            "type": "integer",
+                            "description": "Azure DevOps Pipeline ID",
+                        },
+                        "run_id": {
+                            "type": "integer",
+                            "description": "Azure DevOps Pipeline run ID",
+                        },
+                        "stage_id": {
+                            "type": "string",
+                            "description": "Specific stage ID to download logs from",
+                        },
+                        "repo_path": {
+                            "type": "string",
+                            "description": "Path to the git repository (defaults to current directory)",
+                        },
+                    },
+                    "required": ["pipeline_id", "run_id", "stage_id"],
+                },
+            },
+            "check_azure_pipelines_run_status": {
+                "description": "Check the status of an Azure DevOps Pipeline run or specific stage without downloading logs",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "pipeline_id": {
+                            "type": "integer",
+                            "description": "Azure DevOps Pipeline ID",
+                        },
+                        "run_id": {
+                            "type": "integer",
+                            "description": "Azure DevOps Pipeline run ID",
+                        },
+                        "stage_id": {
+                            "type": "string",
+                            "description": "Optional: specific stage ID to check. If not provided, checks the run status.",
+                        },
+                        "repo_path": {
+                            "type": "string",
+                            "description": "Path to the git repository (defaults to current directory)",
+                        },
+                    },
+                    "required": ["pipeline_id", "run_id"],
                 },
             },
         }
@@ -279,6 +371,14 @@ class MCPServer:
             return self.call_download_github_actions_job_logs(tool_input, msg_id)
         elif tool_name == "check_github_actions_job_status":
             return self.call_check_github_actions_job_status(tool_input, msg_id)
+        elif tool_name == "list_azure_pipelines_runs":
+            return self.call_list_azure_pipelines_runs(tool_input, msg_id)
+        elif tool_name == "get_azure_pipelines_run_stages":
+            return self.call_get_azure_pipelines_run_stages(tool_input, msg_id)
+        elif tool_name == "download_azure_pipelines_stage_logs":
+            return self.call_download_azure_pipelines_stage_logs(tool_input, msg_id)
+        elif tool_name == "check_azure_pipelines_run_status":
+            return self.call_check_azure_pipelines_run_status(tool_input, msg_id)
         else:
             return {
                 "jsonrpc": "2.0",
@@ -571,6 +671,252 @@ class MCPServer:
                     "error": {
                         "code": -32603,
                         "message": f"Failed to check status for run {run_id}" + (f" job {job_id}" if job_id else ""),
+                    },
+                    "id": msg_id,
+                }
+
+            return {
+                "jsonrpc": "2.0",
+                "result": {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "status: " + json.dumps(status, indent=2),
+                        }
+                    ],
+                },
+                "id": msg_id,
+            }
+
+        except Exception as e:
+            return {
+                "jsonrpc": "2.0",
+                "error": {
+                    "code": -32603,
+                    "message": f"Error executing tool: {str(e)}",
+                },
+                "id": msg_id,
+            }
+
+    def call_list_azure_pipelines_runs(
+        self, tool_input: dict[str, Any], msg_id: Any
+    ) -> dict[str, Any]:
+        """List recent Azure DevOps Pipeline runs."""
+        try:
+            repo_path = tool_input.get("repo_path", ".")
+            count = min(tool_input.get("count", 10), 50)  # Cap at 50
+            path = Path(repo_path).resolve()
+
+            # Get the current state
+            state = RepoState(path)
+
+            # Create and execute the action
+            action = GetAzurePipelinesAction()
+            runs = action.list_recent_runs(state, count)
+
+            if runs is None:
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32603,
+                        "message": "Failed to list Azure DevOps Pipeline runs",
+                    },
+                    "id": msg_id,
+                }
+
+            return {
+                "jsonrpc": "2.0",
+                "result": {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": f"Found {len(runs)} recent runs",
+                        },
+                        {
+                            "type": "text",
+                            "text": "runs: " + json.dumps(runs, indent=2),
+                        },
+                    ],
+                },
+                "id": msg_id,
+            }
+
+        except Exception as e:
+            return {
+                "jsonrpc": "2.0",
+                "error": {
+                    "code": -32603,
+                    "message": f"Error executing tool: {str(e)}",
+                },
+                "id": msg_id,
+            }
+
+    def call_get_azure_pipelines_run_stages(
+        self, tool_input: dict[str, Any], msg_id: Any
+    ) -> dict[str, Any]:
+        """Get stages for a specific Azure DevOps Pipeline run."""
+        try:
+            pipeline_id = tool_input.get("pipeline_id")
+            run_id = tool_input.get("run_id")
+
+            if not pipeline_id or not run_id:
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32602,
+                        "message": "Missing required parameters: pipeline_id, run_id",
+                    },
+                    "id": msg_id,
+                }
+
+            repo_path = tool_input.get("repo_path", ".")
+            path = Path(repo_path).resolve()
+
+            # Get the current state
+            state = RepoState(path)
+
+            # Create and execute the action
+            action = GetAzurePipelinesAction()
+            stages = action.get_run_stages(state, pipeline_id, run_id)
+
+            if stages is None:
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32603,
+                        "message": f"Failed to get stages for run {run_id}",
+                    },
+                    "id": msg_id,
+                }
+
+            return {
+                "jsonrpc": "2.0",
+                "result": {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": f"Found {len(stages)} stages in run {run_id}",
+                        },
+                        {
+                            "type": "text",
+                            "text": "stages: " + json.dumps(stages, indent=2),
+                        },
+                    ],
+                },
+                "id": msg_id,
+            }
+
+        except Exception as e:
+            return {
+                "jsonrpc": "2.0",
+                "error": {
+                    "code": -32603,
+                    "message": f"Error executing tool: {str(e)}",
+                },
+                "id": msg_id,
+            }
+
+    def call_download_azure_pipelines_stage_logs(
+        self, tool_input: dict[str, Any], msg_id: Any
+    ) -> dict[str, Any]:
+        """Download logs for a specific stage in an Azure DevOps Pipeline run."""
+        try:
+            pipeline_id = tool_input.get("pipeline_id")
+            run_id = tool_input.get("run_id")
+            stage_id = tool_input.get("stage_id")
+
+            if not pipeline_id or not run_id or not stage_id:
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32602,
+                        "message": "Missing required parameters: pipeline_id, run_id, stage_id",
+                    },
+                    "id": msg_id,
+                }
+
+            repo_path = tool_input.get("repo_path", ".")
+            path = Path(repo_path).resolve()
+
+            # Get the current state
+            state = RepoState(path)
+
+            # Create and execute the action
+            action = GetAzurePipelinesAction()
+            log_file = action.download_stage_logs(state, pipeline_id, run_id, stage_id)
+
+            if log_file:
+                return {
+                    "jsonrpc": "2.0",
+                    "result": {
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": f"Successfully downloaded logs for stage {stage_id} from run {run_id}",
+                            },
+                            {
+                                "type": "text",
+                                "text": f"Log file: {log_file}",
+                            },
+                        ],
+                    },
+                    "id": msg_id,
+                }
+            else:
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32603,
+                        "message": f"Failed to download logs for stage {stage_id}",
+                    },
+                    "id": msg_id,
+                }
+
+        except Exception as e:
+            return {
+                "jsonrpc": "2.0",
+                "error": {
+                    "code": -32603,
+                    "message": f"Error executing tool: {str(e)}",
+                },
+                "id": msg_id,
+            }
+
+    def call_check_azure_pipelines_run_status(
+        self, tool_input: dict[str, Any], msg_id: Any
+    ) -> dict[str, Any]:
+        """Check the status of an Azure DevOps Pipeline run or stage without downloading logs."""
+        try:
+            pipeline_id = tool_input.get("pipeline_id")
+            run_id = tool_input.get("run_id")
+
+            if not pipeline_id or not run_id:
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32602,
+                        "message": "Missing required parameters: pipeline_id, run_id",
+                    },
+                    "id": msg_id,
+                }
+
+            stage_id = tool_input.get("stage_id")
+            repo_path = tool_input.get("repo_path", ".")
+            path = Path(repo_path).resolve()
+
+            # Get the current state
+            state = RepoState(path)
+
+            # Create and execute the action
+            action = GetAzurePipelinesAction()
+            status = action.check_run_status(state, pipeline_id, run_id, stage_id)
+
+            if status is None:
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32603,
+                        "message": f"Failed to check status for run {run_id}" + (f" stage {stage_id}" if stage_id else ""),
                     },
                     "id": msg_id,
                 }

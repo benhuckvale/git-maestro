@@ -12,6 +12,11 @@ from .refresh_github_actions import RefreshGithubActionsAction
 from .view_failed_jobs import ViewFailedJobsAction
 from .download_job_traces import DownloadJobTracesAction
 from .get_github_actions_logs import GetGithubActionsLogsAction
+from .setup_azure_devops import SetupAzureDevOpsAction
+from .configure_azure_token import ConfigureAzureTokenAction
+from .fetch_azure_pipelines import FetchAzurePipelinesAction
+from .get_azure_pipelines import GetAzurePipelinesAction
+from .download_azure_stage_logs import DownloadAzureStageLogsAction
 
 __all__ = [
     "Action",
@@ -26,4 +31,9 @@ __all__ = [
     "ViewFailedJobsAction",
     "DownloadJobTracesAction",
     "GetGithubActionsLogsAction",
+    "SetupAzureDevOpsAction",
+    "ConfigureAzureTokenAction",
+    "FetchAzurePipelinesAction",
+    "GetAzurePipelinesAction",
+    "DownloadAzureStageLogsAction",
 ]

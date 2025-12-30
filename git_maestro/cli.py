@@ -1,6 +1,7 @@
 """Main CLI entry point for git-maestro."""
 
 import sys
+import subprocess
 from pathlib import Path
 from rich.console import Console
 
@@ -19,9 +20,51 @@ from .actions import (
     ViewFailedJobsAction,
     DownloadJobTracesAction,
     GetGithubActionsLogsAction,
+    SetupAzureDevOpsAction,
+    ConfigureAzureTokenAction,
+    FetchAzurePipelinesAction,
+    GetAzurePipelinesAction,
+    DownloadAzureStageLogsAction,
 )
 
 console = Console()
+
+
+def get_git_info() -> tuple[str, str, bool]:
+    """Get git commit hash, describe output, and dirty status for this package.
+
+    Returns:
+        Tuple of (commit_hash, git_describe, is_dirty) or ("", "", False) if not a git repo
+    """
+    try:
+        # Get the directory where git_maestro is installed
+        package_dir = Path(__file__).parent.parent
+
+        # Get commit hash
+        commit = subprocess.check_output(
+            ["git", "-C", str(package_dir), "rev-parse", "--short", "HEAD"],
+            stderr=subprocess.DEVNULL,
+            text=True
+        ).strip()
+
+        # Get git describe (tag-based version)
+        describe = subprocess.check_output(
+            ["git", "-C", str(package_dir), "describe", "--tags", "--always"],
+            stderr=subprocess.DEVNULL,
+            text=True
+        ).strip()
+
+        # Check if working directory is dirty
+        status = subprocess.check_output(
+            ["git", "-C", str(package_dir), "status", "--porcelain"],
+            stderr=subprocess.DEVNULL,
+            text=True
+        ).strip()
+        is_dirty = bool(status)
+
+        return commit, describe, is_dirty
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return "", "", False
 
 
 def get_all_actions():
@@ -34,12 +77,17 @@ def get_all_actions():
         AddGitignoreAction(),
         SetupRemoteAction(),
         CreateRemoteRepoAction(),
+        SetupAzureDevOpsAction(),
+        ConfigureAzureTokenAction(),
         # Info actions
         FetchGithubActionsAction(),
+        FetchAzurePipelinesAction(),
         RefreshGithubActionsAction(),
         ViewFailedJobsAction(),
         DownloadJobTracesAction(),
+        DownloadAzureStageLogsAction(),
         GetGithubActionsLogsAction(),
+        GetAzurePipelinesAction(),
     ]
 
 
@@ -51,6 +99,7 @@ def show_help():
   git-maestro [PATH]          Start interactive menu for PATH (default: current directory)
   git-maestro mcp             Start MCP (Model Context Protocol) stdio server
   git-maestro -h, --help      Show this help message
+  git-maestro --version       Show version information
   git-maestro mcp -h          Show MCP server help
 
 [bold]Commands:[/bold]
@@ -87,6 +136,16 @@ def main():
             # Check for help
             if first_arg in ("-h", "--help"):
                 show_help()
+                sys.exit(0)
+
+            # Check for version
+            if first_arg == "--version":
+                commit, describe, is_dirty = get_git_info()
+                version_info = "git-maestro 0.1.0"
+                if commit:
+                    dirty_indicator = "-dirty" if is_dirty else ""
+                    version_info += f" ({describe}{dirty_indicator} @ {commit})"
+                console.print(version_info)
                 sys.exit(0)
 
             # Check for mcp subcommand

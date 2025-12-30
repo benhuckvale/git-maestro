@@ -195,13 +195,14 @@ class SetupRemoteAction(Action):
             console.print("\n[yellow]Select a git hosting provider:[/yellow]")
             console.print("1. GitHub (will create repository via API)")
             console.print("2. GitLab (will create repository via API)")
-            console.print("3. Other (just add remote URL, won't create repository)")
+            console.print("3. Azure DevOps (manual repository creation)")
+            console.print("4. Other (just add remote URL, won't create repository)")
 
             provider_completer = WordCompleter(
-                ["1", "2", "3", "github", "gitlab", "other"]
+                ["1", "2", "3", "4", "github", "gitlab", "azure", "other"]
             )
             provider_choice = prompt(
-                "Choice (1-3): ", completer=provider_completer, default="1"
+                "Choice (1-4): ", completer=provider_completer, default="1"
             )
 
             # Handle GitHub
@@ -211,6 +212,12 @@ class SetupRemoteAction(Action):
             # Handle GitLab
             elif provider_choice in ["2", "gitlab"]:
                 return self._setup_gitlab(state)
+
+            # Handle Azure DevOps
+            elif provider_choice in ["3", "azure"]:
+                from .setup_azure_devops import SetupAzureDevOpsAction
+                azure_action = SetupAzureDevOpsAction()
+                return azure_action.execute(state)
 
             # Handle other/manual
             else:
