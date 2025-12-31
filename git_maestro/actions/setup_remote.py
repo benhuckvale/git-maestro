@@ -12,6 +12,7 @@ from .base import Action
 from git_maestro.state import RepoState
 from git_maestro.ssh_config import SSHConfig
 from git_maestro.description_helper import get_description_options
+from git_maestro.push_helper import push_to_remote
 
 console = Console()
 
@@ -320,7 +321,7 @@ class SetupRemoteAction(Action):
 
             # Push if there are commits
             if state.has_commits:
-                return self._push_to_remote(state, origin)
+                return push_to_remote(state, origin)
 
             console.print(
                 "[yellow]No commits yet - add some commits and push manually later[/yellow]"
@@ -441,7 +442,7 @@ class SetupRemoteAction(Action):
 
             # Push if there are commits
             if state.has_commits:
-                return self._push_to_remote(state, origin)
+                return push_to_remote(state, origin)
 
             console.print(
                 "[yellow]No commits yet - add some commits and push manually later[/yellow]"
@@ -472,30 +473,7 @@ class SetupRemoteAction(Action):
 
         # Ask if user wants to push
         if state.has_commits:
-            return self._push_to_remote(state, origin)
+            return push_to_remote(state, origin)
 
         return True
 
-    def _push_to_remote(self, state: RepoState, origin) -> bool:
-        """Push to remote repository."""
-        console.print("\n[yellow]Push to remote now?[/yellow]")
-        should_push = prompt("Push (y/n): ", default="y").lower()
-
-        if should_push == "y":
-            try:
-                console.print("[cyan]Pushing to remote...[/cyan]")
-                branch = state.repo.active_branch.name
-                origin.push(refspec=f"{branch}:{branch}", set_upstream=True)
-                console.print(
-                    "[bold green]✓ Pushed to remote successfully![/bold green]"
-                )
-            except Exception as push_error:
-                console.print(f"[bold red]✗ Push failed: {push_error}[/bold red]")
-                console.print(
-                    "[yellow]You can push manually later with: git push -u origin {branch}[/yellow]".format(
-                        branch=branch
-                    )
-                )
-                return False
-
-        return True

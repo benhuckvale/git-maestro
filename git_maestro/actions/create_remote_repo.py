@@ -10,6 +10,7 @@ from .base import Action
 from .setup_remote import SetupRemoteAction
 from git_maestro.state import RepoState
 from git_maestro.ssh_config import SSHConfig
+from git_maestro.push_helper import push_to_remote
 
 console = Console()
 
@@ -268,25 +269,8 @@ class CreateRemoteRepoAction(Action):
 
             # Offer to push
             if state.has_commits:
-                console.print("\n[yellow]Push to remote now?[/yellow]")
-                should_push = prompt("Push (y/n): ", default="y").lower()
-
-                if should_push == "y":
-                    try:
-                        console.print("[cyan]Pushing to remote...[/cyan]")
-                        branch = state.repo.active_branch.name
-                        origin = state.repo.remotes.origin
-                        origin.push(refspec=f"{branch}:{branch}", set_upstream=True)
-                        console.print(
-                            "[bold green]✓ Pushed to remote successfully![/bold green]"
-                        )
-                    except Exception as push_error:
-                        console.print(
-                            f"[bold red]✗ Push failed: {push_error}[/bold red]"
-                        )
-                        console.print(
-                            f"[yellow]You can push manually with: git push -u origin {branch}[/yellow]"
-                        )
+                origin = state.repo.remotes.origin
+                push_to_remote(state, origin)
 
             return True
 

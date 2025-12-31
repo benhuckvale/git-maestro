@@ -5,6 +5,7 @@ from prompt_toolkit import prompt
 from prompt_toolkit.completion import WordCompleter
 from .base import Action
 from git_maestro.state import RepoState
+from git_maestro.push_helper import push_to_remote
 
 console = Console()
 
@@ -140,31 +141,8 @@ class InitialCommitAction(Action):
 
             # Ask about pushing
             if state.has_remote:
-                console.print(
-                    f"\n[yellow]Push to remote ({state.remote_url})?[/yellow]"
-                )
-                should_push = prompt("Push (y/n): ", default="y").lower()
-
-                if should_push == "y":
-                    try:
-                        console.print(
-                            f"[cyan]Pushing to origin {branch_name}...[/cyan]"
-                        )
-                        origin = state.repo.remotes.origin
-                        origin.push(
-                            refspec=f"{branch_name}:{branch_name}", set_upstream=True
-                        )
-                        console.print(
-                            "[bold green]✓ Pushed to remote successfully![/bold green]"
-                        )
-                    except Exception as push_error:
-                        console.print(
-                            f"[bold red]✗ Push failed: {push_error}[/bold red]"
-                        )
-                        console.print(
-                            "[yellow]You can push manually later with:[/yellow]"
-                        )
-                        console.print(f"[dim]  git push -u origin {branch_name}[/dim]")
+                origin = state.repo.remotes.origin
+                push_to_remote(state, origin)
 
             return True
 
