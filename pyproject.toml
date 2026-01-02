@@ -1,6 +1,6 @@
 [project]
 name = "git-maestro"
-version = "0.1.0"
+dynamic = ["version"]
 description = "A slick CLI tool to manage and progress git repositories with interactive menus"
 authors = [
     {name = "Ben", email = "ben@example.com"},
@@ -26,6 +26,9 @@ build-backend = "pdm.backend"
 
 [tool.pdm]
 distribution = true
+
+[tool.pdm.version]
+source = "scm"
 
 [tool.pdm.dev-dependencies]
 dev = [
