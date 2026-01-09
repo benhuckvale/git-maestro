@@ -1,6 +1,12 @@
 # 🎼 Git Maestro
 
-A slick CLI tool to manage and progress git repositories with interactive menus.
+[![PyPI version](https://badge.fury.io/py/git-maestro.svg)](https://badge.fury.io/py/git-maestro)
+[![Documentation](https://img.shields.io/badge/docs-github.io-blue)](https://benhuckvale.github.io/git-maestro/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A convenient TUI for managing git repositories with interactive menus.
+
+📚 **[Read the full documentation](https://benhuckvale.github.io/git-maestro/)**
 
 Git Maestro observes the current state of your git repository, both local and remote, and presents you with context-aware actions to help you quickly set up and manage your projects. No more typing countless git commands and switching in and out of the browser - just select from a beautiful menu and let Git Maestro handle the rest!
 
@@ -15,31 +21,29 @@ Git Maestro observes the current state of your git repository, both local and re
 
 ## Installation
 
-### Using PDM (Recommended for Development)
+### From PyPI (Recommended)
+
+```bash
+pip install git-maestro
+```
+
+### From Source (Development)
 
 ```bash
 # Clone the repository
-git clone <your-repo-url>
+git clone https://github.com/benhuckvale/git-maestro.git
 cd git-maestro
 
-# Install dependencies
+# Install with PDM
 pdm install
 
 # Run in development mode
 pdm run git-maestro
 ```
 
-### Global Installation
-
-```bash
-# Install globally using pdm
-pdm install -G
-
-# Or install in editable mode for development
-pip install -e .
-```
-
 After installation, you can run `git-maestro` from anywhere, or use it as a git plugin with `git maestro`.
+
+📖 **[Installation Guide](https://benhuckvale.github.io/git-maestro/installation/)**
 
 ## Usage
 
@@ -61,6 +65,8 @@ Git Maestro will:
 3. Present a menu of applicable actions
 4. Execute your selected action
 5. Refresh and show updated options
+
+📖 **[Quick Start Guide](https://benhuckvale.github.io/git-maestro/quickstart/)**
 
 ## Current Actions
 
@@ -119,6 +125,8 @@ Add to your Claude Code `mcp.json`:
 ```
 
 Then use `git-maestro mcp` in your Claude session to enable these tools.
+
+📖 **[Full MCP Documentation](https://benhuckvale.github.io/git-maestro/github-api/#mcp-tools-for-github-actions)**
 
 ## Requirements
 

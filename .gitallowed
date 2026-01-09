@@ -5,3 +5,10 @@
 # (This is a local testing script with placeholder credentials)
 password = localpass123
 username = localuser
+
+# Documentation examples in docs/configuration.md
+# These are placeholder examples, not real tokens
+Environment variable: `GITHUB_TOKEN`
+Environment variable: `GITLAB_TOKEN`
+export GITHUB_TOKEN="<your-github-token>"
+export GITLAB_TOKEN="<your-gitlab-token>"

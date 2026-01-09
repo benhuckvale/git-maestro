@@ -93,7 +93,7 @@ def get_all_actions():
 
 def show_help():
     """Show help message."""
-    console.print("""[bold cyan]git-maestro[/bold cyan] - A slick CLI tool to manage git repositories
+    console.print("""[bold cyan]git-maestro[/bold cyan] - A convenient TUI for managing git repositories
 
 [bold]Usage:[/bold]
   git-maestro [PATH]          Start interactive menu for PATH (default: current directory)

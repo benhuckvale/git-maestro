@@ -1,9 +1,9 @@
 [project]
 name = "git-maestro"
 dynamic = ["version"]
-description = "A slick CLI tool to manage and progress git repositories with interactive menus"
+description = "A convenient TUI for managing git repositories with interactive menus"
 authors = [
-    {name = "Ben", email = "ben@example.com"},
+    {name = "Ben Huckvale", email = "ben@huckvale.dev"},
 ]
 dependencies = [
     "rich>=13.7.0",
@@ -16,6 +16,12 @@ dependencies = [
 requires-python = ">=3.9"
 readme = "README.md"
 license = {text = "MIT"}
+
+[project.urls]
+Homepage = "https://benhuckvale.github.io/git-maestro/"
+Documentation = "https://benhuckvale.github.io/git-maestro/"
+Repository = "https://github.com/benhuckvale/git-maestro"
+Issues = "https://github.com/benhuckvale/git-maestro/issues"
 
 [project.scripts]
 git-maestro = "git_maestro.cli:main"
@@ -44,6 +50,10 @@ deploy_test = [
 deploy = [
     "twine>=4.0.0",
     "build>=1.0.0",
+]
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.5.0",
 ]
 
 [tool.pdm.scripts]
