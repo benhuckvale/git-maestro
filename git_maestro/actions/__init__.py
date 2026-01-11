@@ -17,6 +17,8 @@ from .configure_azure_token import ConfigureAzureTokenAction
 from .fetch_azure_pipelines import FetchAzurePipelinesAction
 from .get_azure_pipelines import GetAzurePipelinesAction
 from .download_azure_stage_logs import DownloadAzureStageLogsAction
+from .fetch_gitlab_pipelines import FetchGitlabPipelinesAction
+from .get_gitlab_pipelines import GetGitlabPipelinesAction
 
 __all__ = [
     "Action",
@@ -36,4 +38,6 @@ __all__ = [
     "FetchAzurePipelinesAction",
     "GetAzurePipelinesAction",
     "DownloadAzureStageLogsAction",
+    "FetchGitlabPipelinesAction",
+    "GetGitlabPipelinesAction",
 ]

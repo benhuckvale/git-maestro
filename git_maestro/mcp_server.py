@@ -11,6 +11,7 @@ from git_maestro.actions import (
     DownloadJobTracesAction,
     GetGithubActionsLogsAction,
     GetAzurePipelinesAction,
+    GetGitlabPipelinesAction,
 )
 
 
@@ -199,6 +200,82 @@ class MCPServer:
                     "required": ["pipeline_id", "run_id"],
                 },
             },
+            "list_gitlab_pipelines_runs": {
+                "description": "List recent GitLab Pipelines runs",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "count": {
+                            "type": "integer",
+                            "description": "Number of recent runs to list (default: 10, max: 50)",
+                        },
+                        "repo_path": {
+                            "type": "string",
+                            "description": "Path to the git repository (defaults to current directory)",
+                        },
+                    },
+                    "required": [],
+                },
+            },
+            "get_gitlab_pipelines_run_jobs": {
+                "description": "Get detailed job information for a specific GitLab Pipelines run",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "pipeline_id": {
+                            "type": "integer",
+                            "description": "GitLab Pipeline ID",
+                        },
+                        "repo_path": {
+                            "type": "string",
+                            "description": "Path to the git repository (defaults to current directory)",
+                        },
+                    },
+                    "required": ["pipeline_id"],
+                },
+            },
+            "download_gitlab_pipelines_job_logs": {
+                "description": "Download logs from a specific job in a specific GitLab Pipelines run",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "pipeline_id": {
+                            "type": "integer",
+                            "description": "GitLab Pipeline ID",
+                        },
+                        "job_id": {
+                            "type": "integer",
+                            "description": "Specific job ID to download logs from",
+                        },
+                        "repo_path": {
+                            "type": "string",
+                            "description": "Path to the git repository (defaults to current directory)",
+                        },
+                    },
+                    "required": ["pipeline_id", "job_id"],
+                },
+            },
+            "check_gitlab_pipelines_run_status": {
+                "description": "Check the status of a GitLab Pipelines run or specific job without downloading logs",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "pipeline_id": {
+                            "type": "integer",
+                            "description": "GitLab Pipeline ID",
+                        },
+                        "job_id": {
+                            "type": "integer",
+                            "description": "Optional: specific job ID to check. If not provided, checks the pipeline status.",
+                        },
+                        "repo_path": {
+                            "type": "string",
+                            "description": "Path to the git repository (defaults to current directory)",
+                        },
+                    },
+                    "required": ["pipeline_id"],
+                },
+            },
         }
 
     def _check_dev_installation_safety(self) -> None:
@@ -379,6 +456,14 @@ class MCPServer:
             return self.call_download_azure_pipelines_stage_logs(tool_input, msg_id)
         elif tool_name == "check_azure_pipelines_run_status":
             return self.call_check_azure_pipelines_run_status(tool_input, msg_id)
+        elif tool_name == "list_gitlab_pipelines_runs":
+            return self.call_list_gitlab_pipelines_runs(tool_input, msg_id)
+        elif tool_name == "get_gitlab_pipelines_run_jobs":
+            return self.call_get_gitlab_pipelines_run_jobs(tool_input, msg_id)
+        elif tool_name == "download_gitlab_pipelines_job_logs":
+            return self.call_download_gitlab_pipelines_job_logs(tool_input, msg_id)
+        elif tool_name == "check_gitlab_pipelines_run_status":
+            return self.call_check_gitlab_pipelines_run_status(tool_input, msg_id)
         else:
             return {
                 "jsonrpc": "2.0",
@@ -917,6 +1002,247 @@ class MCPServer:
                     "error": {
                         "code": -32603,
                         "message": f"Failed to check status for run {run_id}" + (f" stage {stage_id}" if stage_id else ""),
+                    },
+                    "id": msg_id,
+                }
+
+            return {
+                "jsonrpc": "2.0",
+                "result": {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "status: " + json.dumps(status, indent=2),
+                        }
+                    ],
+                },
+                "id": msg_id,
+            }
+
+        except Exception as e:
+            return {
+                "jsonrpc": "2.0",
+                "error": {
+                    "code": -32603,
+                    "message": f"Error executing tool: {str(e)}",
+                },
+                "id": msg_id,
+            }
+
+    def call_list_gitlab_pipelines_runs(
+        self, tool_input: dict[str, Any], msg_id: Any
+    ) -> dict[str, Any]:
+        """List recent GitLab Pipelines runs."""
+        try:
+            repo_path = tool_input.get("repo_path", ".")
+            count = min(tool_input.get("count", 10), 50)  # Cap at 50
+            path = Path(repo_path).resolve()
+
+            # Get the current state
+            state = RepoState(path)
+
+            # Create and execute the action
+            action = GetGitlabPipelinesAction()
+            runs = action.list_recent_runs(state, count)
+
+            if runs is None:
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32603,
+                        "message": "Failed to list GitLab Pipelines runs",
+                    },
+                    "id": msg_id,
+                }
+
+            return {
+                "jsonrpc": "2.0",
+                "result": {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": f"Found {len(runs)} recent runs",
+                        },
+                        {
+                            "type": "text",
+                            "text": "runs: " + json.dumps(runs, indent=2),
+                        },
+                    ],
+                },
+                "id": msg_id,
+            }
+
+        except Exception as e:
+            return {
+                "jsonrpc": "2.0",
+                "error": {
+                    "code": -32603,
+                    "message": f"Error executing tool: {str(e)}",
+                },
+                "id": msg_id,
+            }
+
+    def call_get_gitlab_pipelines_run_jobs(
+        self, tool_input: dict[str, Any], msg_id: Any
+    ) -> dict[str, Any]:
+        """Get jobs for a specific GitLab Pipelines run."""
+        try:
+            pipeline_id = tool_input.get("pipeline_id")
+            if not pipeline_id:
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32602,
+                        "message": "Missing required parameter: pipeline_id",
+                    },
+                    "id": msg_id,
+                }
+
+            repo_path = tool_input.get("repo_path", ".")
+            path = Path(repo_path).resolve()
+
+            # Get the current state
+            state = RepoState(path)
+
+            # Create and execute the action
+            action = GetGitlabPipelinesAction()
+            jobs = action.get_run_jobs(state, pipeline_id)
+
+            if jobs is None:
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32603,
+                        "message": f"Failed to get jobs for pipeline {pipeline_id}",
+                    },
+                    "id": msg_id,
+                }
+
+            return {
+                "jsonrpc": "2.0",
+                "result": {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": f"Found {len(jobs)} jobs in pipeline {pipeline_id}",
+                        },
+                        {
+                            "type": "text",
+                            "text": "jobs: " + json.dumps(jobs, indent=2),
+                        },
+                    ],
+                },
+                "id": msg_id,
+            }
+
+        except Exception as e:
+            return {
+                "jsonrpc": "2.0",
+                "error": {
+                    "code": -32603,
+                    "message": f"Error executing tool: {str(e)}",
+                },
+                "id": msg_id,
+            }
+
+    def call_download_gitlab_pipelines_job_logs(
+        self, tool_input: dict[str, Any], msg_id: Any
+    ) -> dict[str, Any]:
+        """Download logs for a specific job."""
+        try:
+            pipeline_id = tool_input.get("pipeline_id")
+            job_id = tool_input.get("job_id")
+
+            if not pipeline_id or not job_id:
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32602,
+                        "message": "Missing required parameters: pipeline_id, job_id",
+                    },
+                    "id": msg_id,
+                }
+
+            repo_path = tool_input.get("repo_path", ".")
+            path = Path(repo_path).resolve()
+
+            # Get the current state
+            state = RepoState(path)
+
+            # Create and execute the action
+            action = GetGitlabPipelinesAction()
+            log_file = action.download_job_logs(state, pipeline_id, job_id)
+
+            if log_file:
+                return {
+                    "jsonrpc": "2.0",
+                    "result": {
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": f"Successfully downloaded logs for job {job_id} from pipeline {pipeline_id}",
+                            },
+                            {
+                                "type": "text",
+                                "text": f"Log file: {log_file}",
+                            },
+                        ],
+                    },
+                    "id": msg_id,
+                }
+            else:
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32603,
+                        "message": f"Failed to download logs for job {job_id}",
+                    },
+                    "id": msg_id,
+                }
+
+        except Exception as e:
+            return {
+                "jsonrpc": "2.0",
+                "error": {
+                    "code": -32603,
+                    "message": f"Error executing tool: {str(e)}",
+                },
+                "id": msg_id,
+            }
+
+    def call_check_gitlab_pipelines_run_status(
+        self, tool_input: dict[str, Any], msg_id: Any
+    ) -> dict[str, Any]:
+        """Check the status of a job or pipeline without downloading logs."""
+        try:
+            pipeline_id = tool_input.get("pipeline_id")
+            if not pipeline_id:
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32602,
+                        "message": "Missing required parameter: pipeline_id",
+                    },
+                    "id": msg_id,
+                }
+
+            job_id = tool_input.get("job_id")
+            repo_path = tool_input.get("repo_path", ".")
+            path = Path(repo_path).resolve()
+
+            # Get the current state
+            state = RepoState(path)
+
+            # Create and execute the action
+            action = GetGitlabPipelinesAction()
+            status = action.check_job_status(state, pipeline_id, job_id)
+
+            if status is None:
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32603,
+                        "message": f"Failed to check status for pipeline {pipeline_id}" + (f" job {job_id}" if job_id else ""),
                     },
                     "id": msg_id,
                 }
