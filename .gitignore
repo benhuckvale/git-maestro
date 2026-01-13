@@ -51,6 +51,9 @@ Thumbs.db
 # Git Maestro data
 .git-maestro/
 
+# Test project git repository (managed separately)
+test-project/.git/
+
 # Secrets and credentials
 tokens.conf
 *.token

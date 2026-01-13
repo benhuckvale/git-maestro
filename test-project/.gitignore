@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv
+dist/
+*.egg-info/
+
+# Testing
+.pytest_cache/
+test-results.xml
+.coverage
+htmlcov/
+
+# Build artifacts
+*.tar.gz
+build/

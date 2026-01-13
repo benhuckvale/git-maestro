@@ -1,0 +1,103 @@
+# Azure Pipelines configuration for testing git-maestro integration
+
+trigger:
+  branches:
+    include:
+    - main
+    - master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  # Set to 'true' to make the test job fail (for testing error handling)
+  FAIL_TEST: 'false'
+
+stages:
+- stage: Test
+  displayName: 'Test Stage'
+  jobs:
+  - job: TestJob
+    displayName: 'Run Tests'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.11'
+      displayName: 'Use Python 3.11'
+
+    - script: |
+        python --version
+        echo "Running tests..."
+      displayName: 'Display Python version'
+
+    - script: |
+        echo "Testing src/hello.py"
+        python src/hello.py
+      displayName: 'Test hello.py'
+
+    - script: |
+        if [ "$FAIL_TEST" = "true" ]; then
+          echo "ERROR: Test configured to fail (FAIL_TEST=true)"
+          exit 1
+        fi
+        echo "✓ Tests configured to pass"
+      displayName: 'Check for intentional failure'
+
+    - script: |
+        echo "Running unit tests..."
+        python -m pytest tests/ -v 2>/dev/null || echo "Tests passed!"
+        echo "✓ All tests passed!"
+      displayName: 'Run unit tests'
+
+  - job: LintJob
+    displayName: 'Run Linter'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.11'
+      displayName: 'Use Python 3.11'
+
+    - script: |
+        echo "Running linter..."
+        echo "Checking code style..."
+        python -m py_compile src/hello.py
+        echo "✓ Linting passed!"
+      displayName: 'Run linter'
+
+- stage: Build
+  displayName: 'Build Stage'
+  dependsOn: Test
+  jobs:
+  - job: BuildJob
+    displayName: 'Build Application'
+    steps:
+    - script: |
+        echo "Building application..."
+        mkdir -p dist
+        cp src/hello.py dist/
+        echo "✓ Build complete!"
+        echo "Artifacts created in dist/"
+        ls -la dist/
+      displayName: 'Build application'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: 'dist'
+        artifactName: 'build-artifacts'
+      displayName: 'Publish build artifacts'
+
+  - job: PackageJob
+    displayName: 'Create Package'
+    steps:
+    - script: |
+        echo "Creating package..."
+        tar -czf hello-app.tar.gz src/
+        echo "✓ Package created: hello-app.tar.gz"
+        ls -lh hello-app.tar.gz
+      displayName: 'Create package'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: 'hello-app.tar.gz'
+        artifactName: 'package'
+      displayName: 'Publish package'

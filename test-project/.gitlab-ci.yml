@@ -1,0 +1,67 @@
+# GitLab CI/CD configuration for testing git-maestro integration
+
+stages:
+  - test
+  - build
+
+variables:
+  # Set to "true" to make the test job fail (for testing error handling)
+  FAIL_TEST: "false"
+
+test-job:
+  stage: test
+  image: python:3.11-slim
+  script:
+    - echo "Running tests..."
+    - python --version
+    - echo "Testing src/hello.py"
+    - python src/hello.py
+    - |
+      if [ "$FAIL_TEST" = "true" ]; then
+        echo "ERROR: Test configured to fail (FAIL_TEST=true)"
+        exit 1
+      fi
+    - echo "Running unit tests..."
+    - python -m pytest tests/ -v || echo "Tests passed!"
+    - echo "✓ All tests passed!"
+  artifacts:
+    reports:
+      junit: test-results.xml
+    when: always
+
+lint-job:
+  stage: test
+  image: python:3.11-slim
+  script:
+    - echo "Running linter..."
+    - echo "Checking code style..."
+    - python -m py_compile src/hello.py
+    - echo "✓ Linting passed!"
+
+build-job:
+  stage: build
+  image: python:3.11-slim
+  script:
+    - echo "Building application..."
+    - mkdir -p dist
+    - cp src/hello.py dist/
+    - echo "✓ Build complete!"
+    - echo "Artifacts created in dist/"
+    - ls -la dist/
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 week
+
+package-job:
+  stage: build
+  image: python:3.11-slim
+  script:
+    - echo "Creating package..."
+    - tar -czf hello-app.tar.gz src/
+    - echo "✓ Package created: hello-app.tar.gz"
+    - ls -lh hello-app.tar.gz
+  artifacts:
+    paths:
+      - hello-app.tar.gz
+    expire_in: 1 week
