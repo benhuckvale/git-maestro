@@ -6,6 +6,8 @@ repo_name: benhuckvale/git-maestro
 
 theme:
   name: material
+  logo: assets/logo.png
+  favicon: assets/logo.png
   palette:
     # Light mode
     - scheme: default

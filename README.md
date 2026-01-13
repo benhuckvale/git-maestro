@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/banner.png" alt="Git Maestro" width="600">
+</p>
+
 # 🎼 Git Maestro
 
 [![PyPI version](https://badge.fury.io/py/git-maestro.svg)](https://badge.fury.io/py/git-maestro)
