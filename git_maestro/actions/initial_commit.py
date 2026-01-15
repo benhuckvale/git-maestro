@@ -1,11 +1,11 @@
 """Action to create the initial commit in a repository."""
 
 from rich.console import Console
-from prompt_toolkit import prompt
+
 from .base import Action
 from git_maestro.state import RepoState
 from git_maestro.push_helper import push_to_remote
-from git_maestro.selection_helper import select_number_from_menu
+from git_maestro.selection_helper import prompt_text, select_number_from_menu
 
 console = Console()
 
@@ -89,7 +89,9 @@ class InitialCommitAction(Action):
 
             # Get commit message
             console.print("\n[yellow]Enter commit message:[/yellow]")
-            commit_message = prompt("Message: ", default="Initial commit")
+            commit_message = (
+                prompt_text("Message:", default="Initial commit") or "Initial commit"
+            )
 
             # Select branch name
             branch_choice = select_number_from_menu(
@@ -114,7 +116,7 @@ class InitialCommitAction(Action):
             elif branch_choice == 3:
                 branch_name = "develop"
             elif branch_choice == 4:
-                branch_name = prompt("Enter branch name: ", default="main")
+                branch_name = prompt_text("Enter branch name:", default="main") or "main"
             else:
                 branch_name = "main"
 

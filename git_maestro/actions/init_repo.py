@@ -2,10 +2,10 @@
 
 import git
 from rich.console import Console
-from prompt_toolkit import prompt
+
 from .base import Action
 from git_maestro.state import RepoState
-from git_maestro.selection_helper import select_number_from_menu
+from git_maestro.selection_helper import prompt_text, select_number_from_menu
 
 console = Console()
 
@@ -54,7 +54,7 @@ class InitRepoAction(Action):
                 branch_name = "develop"
             elif choice == 4:
                 console.print("\n[yellow]Enter custom branch name:[/yellow]")
-                branch_name = prompt("Branch name: ", default="main")
+                branch_name = prompt_text("Branch name:", default="main") or "main"
             else:
                 branch_name = "main"
 

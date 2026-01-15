@@ -86,3 +86,38 @@ def select_number_from_menu(
         return result if result is None else int(result)
     except (KeyboardInterrupt, EOFError):
         return None
+
+
+def prompt_text(message: str, default: Optional[str] = "") -> Optional[str]:
+    """Prompt the user for freeform text input."""
+    try:
+        return questionary.text(
+            message.strip(),
+            default=default or "",
+            style=custom_style,
+        ).ask()
+    except (KeyboardInterrupt, EOFError):
+        return None
+
+
+def prompt_password(message: str) -> Optional[str]:
+    """Prompt the user for a secret/password value."""
+    try:
+        return questionary.password(
+            message.strip(),
+            style=custom_style,
+        ).ask()
+    except (KeyboardInterrupt, EOFError):
+        return None
+
+
+def prompt_confirm(message: str, default: bool = True) -> Optional[bool]:
+    """Prompt the user for a yes/no confirmation."""
+    try:
+        return questionary.confirm(
+            message.strip(),
+            default=default,
+            style=custom_style,
+        ).ask()
+    except (KeyboardInterrupt, EOFError):
+        return None

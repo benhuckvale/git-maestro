@@ -3,16 +3,22 @@
 import os
 from pathlib import Path
 from typing import Optional
-from rich.console import Console
-from prompt_toolkit import prompt
-from github import Github, GithubException
+
 import gitlab
+from github import Github, GithubException
+from rich.console import Console
+
 from .base import Action
 from git_maestro.state import RepoState
 from git_maestro.ssh_config import SSHConfig
 from git_maestro.description_helper import get_description_options
 from git_maestro.push_helper import push_to_remote
-from git_maestro.selection_helper import select_number_from_menu
+from git_maestro.selection_helper import (
+    prompt_confirm,
+    prompt_password,
+    prompt_text,
+    select_number_from_menu,
+)
 
 console = Console()
 
@@ -85,8 +91,8 @@ class SetupRemoteAction(Action):
         stored_token = self._get_stored_token(provider)
         if stored_token:
             console.print(f"[dim]Using stored {provider} token[/dim]")
-            use_stored = prompt("Use stored token? (y/n): ", default="y").lower()
-            if use_stored == "y":
+            use_stored = prompt_confirm("Use stored token?", default=True)
+            if use_stored:
                 return stored_token
 
         # Prompt for new token with detailed instructions
@@ -129,11 +135,13 @@ class SetupRemoteAction(Action):
             )
 
         console.print()
-        token = prompt("Enter token: ", is_password=True)
+        token = prompt_password("Enter token:")
+        if token is None:
+            raise KeyboardInterrupt
 
         # Ask to store
-        store = prompt("Store token for future use? (y/n): ", default="y").lower()
-        if store == "y":
+        store = prompt_confirm("Store token for future use?", default=True)
+        if store:
             self._store_token(provider, token)
             console.print("[green]Token stored securely[/green]")
 
@@ -175,7 +183,7 @@ class SetupRemoteAction(Action):
                 return selected_desc
             elif choice_num == len(options) + 1:
                 # Custom description
-                return prompt("Enter custom description: ", default="")
+                return prompt_text("Enter custom description:", default="") or ""
             elif choice_num == len(options) + 2:
                 # Skip
                 return ""
@@ -183,7 +191,7 @@ class SetupRemoteAction(Action):
                 return ""
 
         # Fallback to manual entry
-        return prompt("Description: ", default="")
+        return prompt_text("Description:", default="") or ""
 
     def execute(self, state: RepoState) -> bool:
         """Set up a remote repository."""
@@ -282,7 +290,7 @@ class SetupRemoteAction(Action):
 
             # Get repository details
             console.print("\n[yellow]Enter the repository name:[/yellow]")
-            repo_name = prompt("Repository: ", default=state.path.name)
+            repo_name = prompt_text("Repository:", default=state.path.name) or state.path.name
 
             # Get description with smart suggestions
             description = self._get_description(state, repo_name)
@@ -390,7 +398,7 @@ class SetupRemoteAction(Action):
 
             # Get repository details
             console.print("\n[yellow]Enter the repository name:[/yellow]")
-            repo_name = prompt("Repository: ", default=state.path.name)
+            repo_name = prompt_text("Repository:", default=state.path.name) or state.path.name
 
             # Get description with smart suggestions
             description = self._get_description(state, repo_name)
@@ -474,7 +482,10 @@ class SetupRemoteAction(Action):
     def _setup_manual(self, state: RepoState) -> bool:
         """Set up manual remote URL."""
         console.print("\n[yellow]Enter the remote repository URL:[/yellow]")
-        remote_url = prompt("URL: ")
+        remote_url = prompt_text("URL:", default="")
+        if not remote_url:
+            console.print("[yellow]No remote URL entered. Cancelled.[/yellow]")
+            return False
 
         # Add remote
         origin = state.repo.create_remote("origin", remote_url)
@@ -489,4 +500,3 @@ class SetupRemoteAction(Action):
             return push_to_remote(state, origin)
 
         return True
-

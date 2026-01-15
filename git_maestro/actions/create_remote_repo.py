@@ -2,10 +2,11 @@
 
 import re
 from typing import Optional
-from rich.console import Console
-from prompt_toolkit import prompt
-from github import Github, GithubException
+
 import gitlab
+from github import Github, GithubException
+from rich.console import Console
+
 from .base import Action
 from .setup_remote import SetupRemoteAction
 from git_maestro.state import RepoState

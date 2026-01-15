@@ -1,9 +1,10 @@
 """Action to add a README.md file."""
 
 from rich.console import Console
-from prompt_toolkit import prompt
+
 from .base import Action
 from git_maestro.state import RepoState
+from git_maestro.selection_helper import prompt_text
 
 console = Console()
 
@@ -33,7 +34,7 @@ class AddReadmeAction(Action):
             console.print(
                 "\n[yellow]Enter a brief description for your project (or press Enter to skip):[/yellow]"
             )
-            description = prompt("Description: ", default="")
+            description = prompt_text("Description:", default="") or ""
 
             # Create README content
             readme_content = f"# {project_name}\n\n"

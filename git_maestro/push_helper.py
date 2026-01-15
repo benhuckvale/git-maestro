@@ -1,9 +1,9 @@
 """Shared push helper module for selective remote push operations."""
 
 from rich.console import Console
-from prompt_toolkit import prompt
+
 from git_maestro.state import RepoState
-from git_maestro.selection_helper import select_number_from_menu
+from git_maestro.selection_helper import prompt_text, select_number_from_menu
 
 console = Console()
 
@@ -195,7 +195,10 @@ def _push_specific_commit(state: RepoState, origin) -> bool:
 
     # Ask which branch to view commits from
     console.print("\n[yellow]Which branch's commits would you like to view?[/yellow]")
-    branch_to_view = prompt(f"Branch name (default: {current_branch}): ", default=current_branch)
+    branch_to_view = prompt_text(
+        f"Branch name (default: {current_branch}):",
+        default=current_branch,
+    ) or current_branch
 
     # Show commits on that branch
     console.print(f"\n[cyan]Recent commits on {branch_to_view}:[/cyan]")
@@ -226,7 +229,7 @@ def _push_specific_commit(state: RepoState, origin) -> bool:
     # Get commit selection
     console.print("\n[yellow]Select a commit to push (by number or SHA):[/yellow]")
     console.print("[dim]The branch will be pushed up to this commit (creating partial history on remote)[/dim]")
-    selection = prompt("Commit (number or SHA): ")
+    selection = prompt_text("Commit (number or SHA):", default="")
 
     if not selection:
         console.print("[yellow]No commit specified, skipping[/yellow]")
@@ -248,7 +251,7 @@ def _push_specific_commit(state: RepoState, origin) -> bool:
 
     # Get target branch name for the push
     console.print("\n[yellow]Which remote branch should this commit be pushed to?[/yellow]")
-    target_branch = prompt("Target branch: ", default=branch_to_view)
+    target_branch = prompt_text("Target branch:", default=branch_to_view) or branch_to_view
 
     # Ask about set-upstream
     set_upstream_choice = select_number_from_menu(

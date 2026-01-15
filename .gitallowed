@@ -12,3 +12,7 @@ Environment variable: `GITHUB_TOKEN`
 Environment variable: `GITLAB_TOKEN`
 export GITHUB_TOKEN="<your-github-token>"
 export GITLAB_TOKEN="<your-gitlab-token>"
+
+# questionary API call in git_maestro/selection_helper.py
+     """Prompt the user for a secret/password value."""
+        return questionary.password(

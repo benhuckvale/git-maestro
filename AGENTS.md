@@ -31,7 +31,7 @@ Git Maestro is an interactive CLI tool that helps users manage git repositories 
    - MCP server mode: `git-maestro mcp`
 
 4. **Menu System** (`git_maestro/menu.py`)
-   - Interactive menu using `prompt_toolkit`
+   - Interactive menu using `questionary`
    - Shows applicable actions based on state
    - Handles user selection and execution
 
@@ -97,13 +97,14 @@ class YourAction(Action):
 ## Common Patterns
 
 ### Interactive Prompts
-Uses `prompt_toolkit` for user input:
+Uses `questionary` for user input:
 ```python
-from prompt_toolkit import prompt
-from prompt_toolkit.completion import WordCompleter
+import questionary
 
-completer = WordCompleter(["option1", "option2"])
-choice = prompt("Choose: ", completer=completer, default="option1")
+choice = questionary.select(
+    "Choose:",
+    choices=["option1", "option2"],
+).ask()
 ```
 
 ### Rich Console Output
@@ -204,7 +205,7 @@ Git Maestro now runs as an MCP stdio server, enabling AI assistants to:
 Core libraries:
 - `gitpython` - Git repository introspection
 - `rich` - Terminal formatting
-- `prompt_toolkit` - Interactive prompts and menus
+- `questionary` - Interactive prompts and menus
 - `PyGithub` - GitHub API
 - `python-gitlab` - GitLab API
 - `azure-devops` - Azure DevOps API

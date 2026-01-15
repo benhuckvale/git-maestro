@@ -3,16 +3,21 @@
 import os
 from pathlib import Path
 from typing import Optional
+
 from rich.console import Console
-from prompt_toolkit import prompt
 
 from .base import Action
 from git_maestro.state import RepoState
 from git_maestro.ssh_config import SSHConfig
 from git_maestro.description_helper import get_description_options
-from git_maestro.azure import parse_azure_url, AzureClient
+from git_maestro.azure import AzureClient
 from git_maestro.push_helper import push_to_remote
-from git_maestro.selection_helper import select_number_from_menu
+from git_maestro.selection_helper import (
+    prompt_confirm,
+    prompt_password,
+    prompt_text,
+    select_number_from_menu,
+)
 
 console = Console()
 
@@ -85,8 +90,8 @@ class SetupAzureDevOpsAction(Action):
         stored_token = self._get_stored_token()
         if stored_token:
             console.print("[dim]Using stored Azure DevOps token[/dim]")
-            use_stored = prompt("Use stored token? (y/n): ", default="y").lower()
-            if use_stored == "y":
+            use_stored = prompt_confirm("Use stored token?", default=True)
+            if use_stored:
                 return stored_token
 
         # Prompt for new token with detailed instructions
@@ -110,11 +115,13 @@ class SetupAzureDevOpsAction(Action):
         console.print("  [dim]6.[/dim] Copy the token immediately (it won't be shown again)")
 
         console.print()
-        token = prompt("Enter PAT: ", is_password=True)
+        token = prompt_password("Enter PAT:")
+        if token is None:
+            raise KeyboardInterrupt
 
         # Ask to store
-        store = prompt("Store token for future use? (y/n): ", default="y").lower()
-        if store == "y":
+        store = prompt_confirm("Store token for future use?", default=True)
+        if store:
             self._store_token(token)
             console.print("[green]Token stored securely[/green]")
 
@@ -156,7 +163,7 @@ class SetupAzureDevOpsAction(Action):
                 return selected_desc
             elif choice_num == len(options) + 1:
                 # Custom description
-                return prompt("Enter custom description: ", default="")
+                return prompt_text("Enter custom description:", default="") or ""
             elif choice_num == len(options) + 2:
                 # Skip
                 return ""
@@ -164,7 +171,7 @@ class SetupAzureDevOpsAction(Action):
                 return ""
 
         # Fallback to manual entry
-        return prompt("Description: ", default="")
+        return prompt_text("Description:", default="") or ""
 
     def execute(self, state: RepoState) -> bool:
         """Set up an Azure DevOps remote repository."""
@@ -177,7 +184,7 @@ class SetupAzureDevOpsAction(Action):
             # Get organization
             console.print("\n[yellow]Enter your Azure DevOps organization name:[/yellow]")
             console.print("[dim]Example: if your URL is https://dev.azure.com/mycompany, enter 'mycompany'[/dim]")
-            organization = prompt("Organization: ")
+            organization = prompt_text("Organization:", default="")
 
             if not organization:
                 console.print("[bold red]✗ Organization name is required[/bold red]")
@@ -185,7 +192,7 @@ class SetupAzureDevOpsAction(Action):
 
             # Get project name
             console.print("\n[yellow]Enter your Azure DevOps project name:[/yellow]")
-            project = prompt("Project: ", default=state.path.name)
+            project = prompt_text("Project:", default=state.path.name) or state.path.name
 
             if not project:
                 console.print("[bold red]✗ Project name is required[/bold red]")
@@ -214,7 +221,7 @@ class SetupAzureDevOpsAction(Action):
 
             # Get repository details
             console.print("\n[yellow]Enter the repository name:[/yellow]")
-            repo_name = prompt("Repository: ", default=state.path.name)
+            repo_name = prompt_text("Repository:", default=state.path.name) or state.path.name
 
             if not repo_name:
                 console.print("[bold red]✗ Repository name is required[/bold red]")
@@ -274,4 +281,3 @@ class SetupAzureDevOpsAction(Action):
         except Exception as e:
             console.print(f"[bold red]✗ Error setting up remote: {e}[/bold red]")
             return False
-

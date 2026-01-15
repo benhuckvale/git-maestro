@@ -3,12 +3,13 @@
 import os
 from pathlib import Path
 from typing import Optional
+
 from rich.console import Console
-from prompt_toolkit import prompt
 
 from .base import Action
 from git_maestro.state import RepoState
-from git_maestro.azure import parse_azure_url, AzureClient
+from git_maestro.azure import AzureClient, parse_azure_url
+from git_maestro.selection_helper import prompt_password
 
 console = Console()
 
@@ -103,7 +104,7 @@ class ConfigureAzureTokenAction(Action):
             console.print("  [dim]6.[/dim] Copy the token immediately (it won't be shown again)")
 
             console.print()
-            token = prompt("Enter PAT: ", is_password=True)
+            token = prompt_password("Enter PAT:")
 
             if not token:
                 console.print("[yellow]No token provided, skipping[/yellow]")
