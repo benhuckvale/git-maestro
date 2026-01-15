@@ -3,7 +3,7 @@
 import json
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator, Tuple
 import inspect
 
 from git_maestro.state import RepoState
@@ -22,6 +22,7 @@ class MCPServer:
         self.version = "2024-11-05"
         self.dev_installation_error: str | None = None
         self._check_dev_installation_safety()
+        self._use_framing: bool | None = None
         self.tools = {
             "download_job_traces": {
                 "description": "Download GitHub Actions job traces/logs for failed jobs in the current repository",
@@ -310,13 +311,118 @@ class MCPServer:
             # Silently ignore any errors in this safety check
             pass
 
+    def _send_response(self, payload: dict[str, Any]) -> None:
+        """Send a JSON-RPC response.
+
+        Supports both MCP framed responses (Content-Length headers) and
+        newline-delimited JSON for simple clients.
+        """
+        body = json.dumps(payload).encode("utf-8")
+
+        if self._use_framing is False:
+            sys.stdout.buffer.write(body + b"\n")
+            sys.stdout.buffer.flush()
+            return
+
+        header = f"Content-Length: {len(body)}\r\n\r\n".encode("utf-8")
+        sys.stdout.buffer.write(header)
+        sys.stdout.buffer.write(body)
+        sys.stdout.buffer.flush()
+
+    def _read_message_payloads(self) -> Iterator[bytes]:
+        """
+        Yield raw JSON payloads from stdin.
+
+        Supports both MCP framed messages (with Content-Length headers) and
+        newline-delimited JSON messages used by simple shell piping.
+        """
+        buffer = sys.stdin.buffer
+
+        while True:
+            line = buffer.readline()
+            if not line:
+                return
+
+            stripped = line.strip()
+            if not stripped:
+                continue
+
+            # Handle simple newline-delimited JSON (no headers)
+            if stripped.startswith((b"{", b"[")):
+                if self._use_framing is None:
+                    self._use_framing = False
+                yield stripped
+                continue
+
+            if self._use_framing is None:
+                self._use_framing = True
+
+            headers: dict[str, str] = {}
+            current_line = line
+            while True:
+                decoded = current_line.decode("utf-8", errors="ignore")
+                if ":" in decoded:
+                    key, value = decoded.split(":", 1)
+                    headers[key.strip().lower()] = value.strip()
+
+                current_line = buffer.readline()
+                if not current_line:
+                    return
+                if current_line in (b"\r\n", b"\n"):
+                    break
+
+            content_length = headers.get("content-length")
+            if not content_length:
+                continue
+
+            try:
+                remaining = int(content_length)
+            except ValueError:
+                continue
+
+            payload = bytearray()
+            while remaining > 0:
+                chunk = buffer.read(remaining)
+                if not chunk:
+                    return
+                payload.extend(chunk)
+                remaining -= len(chunk)
+
+            yield bytes(payload)
+
+    def _incoming_messages(self) -> Iterator[Tuple[bool, dict[str, Any] | None]]:
+        """Yield decoded JSON messages, flagging parse errors."""
+        for payload in self._read_message_payloads():
+            try:
+                message = json.loads(payload.decode("utf-8"))
+                yield True, message
+            except json.JSONDecodeError:
+                yield False, None
+
+    def _emit_parse_error(self) -> None:
+        """Send a JSON-RPC parse error response."""
+        self._send_response(
+            {
+                "jsonrpc": "2.0",
+                "error": {
+                    "code": -32700,
+                    "message": "Parse error",
+                },
+                "id": None,
+            }
+        )
+
     def handle_message(self) -> None:
         """Handle incoming MCP messages from stdin."""
         # If there's a dev installation error, reject all messages
         if self.dev_installation_error:
-            for line in sys.stdin:
+            for success, message in self._incoming_messages():
+                if not success or message is None:
+                    self._emit_parse_error()
+                    continue
+                if not isinstance(message, dict) or "id" not in message:
+                    continue
                 try:
-                    message = json.loads(line)
                     error_response = {
                         "jsonrpc": "2.0",
                         "error": {
@@ -325,17 +431,7 @@ class MCPServer:
                         },
                         "id": message.get("id"),
                     }
-                    print(json.dumps(error_response), flush=True)
-                except json.JSONDecodeError:
-                    error_response = {
-                        "jsonrpc": "2.0",
-                        "error": {
-                            "code": -32700,
-                            "message": "Parse error",
-                        },
-                        "id": None,
-                    }
-                    print(json.dumps(error_response), flush=True)
+                    self._send_response(error_response)
                 except Exception as e:
                     error_response = {
                         "jsonrpc": "2.0",
@@ -345,23 +441,16 @@ class MCPServer:
                         },
                         "id": None,
                     }
-                    print(json.dumps(error_response), flush=True)
+                    self._send_response(error_response)
         else:
-            for line in sys.stdin:
+            for success, message in self._incoming_messages():
+                if not success or message is None:
+                    self._emit_parse_error()
+                    continue
                 try:
-                    message = json.loads(line)
                     response = self.process_message(message)
-                    print(json.dumps(response), flush=True)
-                except json.JSONDecodeError:
-                    error_response = {
-                        "jsonrpc": "2.0",
-                        "error": {
-                            "code": -32700,
-                            "message": "Parse error",
-                        },
-                        "id": None,
-                    }
-                    print(json.dumps(error_response), flush=True)
+                    if response is not None:
+                        self._send_response(response)
                 except Exception as e:
                     error_response = {
                         "jsonrpc": "2.0",
@@ -371,10 +460,23 @@ class MCPServer:
                         },
                         "id": None,
                     }
-                    print(json.dumps(error_response), flush=True)
+                    self._send_response(error_response)
 
-    def process_message(self, message: dict[str, Any]) -> dict[str, Any]:
-        """Process an MCP message."""
+    def process_message(self, message: Any) -> dict[str, Any] | None:
+        """Process an MCP message.
+
+        JSON-RPC notifications (messages with no `id`) must not receive responses.
+        """
+        if not isinstance(message, dict):
+            return {
+                "jsonrpc": "2.0",
+                "error": {"code": -32600, "message": "Invalid Request"},
+                "id": None,
+            }
+
+        if "id" not in message:
+            return None
+
         jsonrpc = message.get("jsonrpc", "2.0")
         method = message.get("method")
         params = message.get("params", {})
@@ -382,6 +484,8 @@ class MCPServer:
 
         if method == "initialize":
             return self.handle_initialize(msg_id)
+        elif method in ("initialized", "notifications/initialized"):
+            return None
         elif method == "tools/list":
             return self.handle_list_tools(msg_id)
         elif method == "tools/call":
