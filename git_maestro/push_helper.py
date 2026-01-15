@@ -2,8 +2,8 @@
 
 from rich.console import Console
 from prompt_toolkit import prompt
-from prompt_toolkit.completion import WordCompleter
 from git_maestro.state import RepoState
+from git_maestro.selection_helper import select_number_from_menu
 
 console = Console()
 
@@ -49,27 +49,31 @@ def push_to_remote(state: RepoState, origin) -> bool:
         pass
 
     # Present options
-    console.print("\n1. Push current branch ({}) with set-upstream".format(current_branch))
-    console.print("2. Push a different branch")
-    console.print("3. Push specific commit from branch history")
-    console.print("4. Skip - don't push now")
-
-    completer = WordCompleter(["1", "2", "3", "4"])
-    choice = prompt("\nChoice (1-4): ", completer=completer, default="1")
+    choice = select_number_from_menu(
+        title="Push to Remote",
+        text="What would you like to push to the remote?",
+        options=[
+            f"Push current branch ({current_branch}) with set-upstream",
+            "Push a different branch",
+            "Push specific commit from branch history",
+            "Skip - don't push now",
+        ],
+        default_index=0,
+    )
 
     # Handle option 1: Current branch (default behavior)
-    if choice == "1":
+    if choice == 1:
         return _push_current_branch(state, origin, current_branch)
 
     # Handle option 2: Specific branch
-    elif choice == "2":
+    elif choice == 2:
         return _push_specific_branch(state, origin)
 
     # Handle option 3: Specific commit
-    elif choice == "3":
+    elif choice == 3:
         return _push_specific_commit(state, origin)
 
-    # Handle option 4 or invalid: Skip
+    # Handle option 4 or cancelled: Skip
     else:
         console.print("[yellow]Skipping push. You can push later with:[/yellow]")
         console.print(f"[dim]  git push -u origin {current_branch}[/dim]")
@@ -126,39 +130,44 @@ def _push_specific_branch(state: RepoState, origin) -> bool:
         console.print("[yellow]No branches available[/yellow]")
         return False
 
-    console.print("\n[cyan]Available branches:[/cyan]")
-    for i, branch in enumerate(branches, 1):
-        console.print(f"  {i}. {branch}")
-
     # Get user selection
-    completer = WordCompleter([str(i) for i in range(1, len(branches) + 1)])
-    choice = prompt(f"\nSelect branch (1-{len(branches)}): ", completer=completer)
+    choice = select_number_from_menu(
+        title="Select Branch",
+        text="Select a branch to push:",
+        options=branches,
+        default_index=0,
+    )
+
+    if choice is None:
+        console.print("[yellow]Cancelled[/yellow]")
+        return False
+
+    selected_branch = branches[choice - 1]
+
+    # Ask about set-upstream
+    set_upstream_choice = select_number_from_menu(
+        title="Set Upstream",
+        text=f"Set {selected_branch} as upstream tracking branch?",
+        options=["Yes", "No"],
+        default_index=0,
+    )
+
+    if set_upstream_choice is None:
+        console.print("[yellow]Cancelled[/yellow]")
+        return False
+
+    set_upstream = set_upstream_choice == 1
 
     try:
-        idx = int(choice) - 1
-        if 0 <= idx < len(branches):
-            selected_branch = branches[idx]
-
-            # Ask about set-upstream
-            console.print(f"\n[yellow]Set {selected_branch} as upstream tracking branch?[/yellow]")
-            set_upstream_choice = prompt("Set upstream (y/n): ", default="y").lower()
-            set_upstream = set_upstream_choice == "y"
-
-            # Push
-            console.print(f"[cyan]Pushing {selected_branch} to remote...[/cyan]")
-            if set_upstream:
-                origin.push(refspec=f"{selected_branch}:{selected_branch}", set_upstream=True)
-            else:
-                origin.push(refspec=f"{selected_branch}:{selected_branch}")
-
-            console.print("[bold green]✓ Pushed to remote successfully![/bold green]")
-            return True
+        # Push
+        console.print(f"[cyan]Pushing {selected_branch} to remote...[/cyan]")
+        if set_upstream:
+            origin.push(refspec=f"{selected_branch}:{selected_branch}", set_upstream=True)
         else:
-            console.print("[yellow]Invalid selection[/yellow]")
-            return False
-    except (ValueError, IndexError) as e:
-        console.print(f"[yellow]Invalid selection: {e}[/yellow]")
-        return False
+            origin.push(refspec=f"{selected_branch}:{selected_branch}")
+
+        console.print("[bold green]✓ Pushed to remote successfully![/bold green]")
+        return True
     except Exception as e:
         console.print(f"[bold red]✗ Push failed: {e}[/bold red]")
         return False
@@ -242,9 +251,18 @@ def _push_specific_commit(state: RepoState, origin) -> bool:
     target_branch = prompt("Target branch: ", default=branch_to_view)
 
     # Ask about set-upstream
-    console.print(f"\n[yellow]Set {target_branch} as upstream tracking branch?[/yellow]")
-    set_upstream_choice = prompt("Set upstream (y/n): ", default="n").lower()
-    set_upstream = set_upstream_choice == "y"
+    set_upstream_choice = select_number_from_menu(
+        title="Set Upstream",
+        text=f"Set {target_branch} as upstream tracking branch?",
+        options=["Yes", "No"],
+        default_index=1,  # Default to No
+    )
+
+    if set_upstream_choice is None:
+        console.print("[yellow]Cancelled[/yellow]")
+        return False
+
+    set_upstream = set_upstream_choice == 1
 
     try:
         # Push specific commit to branch

@@ -1,35 +1,18 @@
-"""Menu system for git-maestro using rich and prompt-toolkit."""
+"""Menu system for git-maestro using rich and inline prompts."""
 
 from typing import List
+
+from rich import box
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from rich import box
-from prompt_toolkit import prompt
-from prompt_toolkit.completion import WordCompleter
-from prompt_toolkit.validation import Validator, ValidationError
 
 from .state import RepoState
 from .actions.base import Action
+from .selection_helper import select_number_from_menu
 
 
 console = Console()
-
-
-class NumberValidator(Validator):
-    """Validator for menu choice input."""
-
-    def __init__(self, max_choice: int):
-        self.max_choice = max_choice
-
-    def validate(self, document):
-        text = document.text
-        if text and not text.isdigit():
-            raise ValidationError(message="Please enter a number")
-        if text and (int(text) < 0 or int(text) > self.max_choice):
-            raise ValidationError(
-                message=f"Please enter a number between 0 and {self.max_choice}"
-            )
 
 
 class Menu:
@@ -104,73 +87,58 @@ class Menu:
 
     def display_menu(self) -> bool:
         """Display the action menu and handle user input. Returns True if user wants to continue."""
-        self.applicable_actions = self.get_applicable_actions()
+        applicable_actions = self.get_applicable_actions()
 
-        if not self.applicable_actions:
+        if not applicable_actions:
             console.print(
                 "\n[bold green]✨ Everything looks good! No actions needed.[/bold green]\n"
             )
             return False
 
-        # Group actions by category
-        setup_actions = [a for a in self.applicable_actions if a.category == "setup"]
-        info_actions = [a for a in self.applicable_actions if a.category == "info"]
+        # Group actions by category so we can surface the category in the prompt text
+        setup_actions = [a for a in applicable_actions if a.category == "setup"]
+        info_actions = [a for a in applicable_actions if a.category == "info"]
+        other_actions = [
+            a for a in applicable_actions if a.category not in {"setup", "info"}
+        ]
 
-        console.print("\n[bold cyan]Available Actions:[/bold cyan]\n")
-
-        # Create menu table
-        menu_table = Table(show_header=True, box=box.SIMPLE, border_style="blue")
-        menu_table.add_column("#", style="bold cyan", width=4)
-        menu_table.add_column("Action", style="bold")
-        menu_table.add_column("Description", style="dim")
-
-        current_idx = 1
-
-        # Add setup actions first
+        sections: List[tuple[str, List[Action]]] = []
         if setup_actions:
-            menu_table.add_row(
-                "", "[bold yellow]Setup[/bold yellow]", "", end_section=True
-            )
-            for action in setup_actions:
-                menu_table.add_row(
-                    str(current_idx), action.get_display_name(), action.description
-                )
-                current_idx += 1
-
-        # Add info actions
+            sections.append(("Setup", setup_actions))
         if info_actions:
-            if setup_actions:
-                menu_table.add_row("", "", "")  # Spacing row
-            menu_table.add_row(
-                "", "[bold yellow]Information[/bold yellow]", "", end_section=True
-            )
-            for action in info_actions:
-                menu_table.add_row(
-                    str(current_idx), action.get_display_name(), action.description
-                )
-                current_idx += 1
+            sections.append(("Gather Facts", info_actions))
+        if other_actions:
+            sections.append(("Other", other_actions))
 
-        menu_table.add_row("", "", "")  # Spacing row
-        menu_table.add_row("0", "❌ Exit", "Exit git-maestro")
+        ordered_actions: List[Action] = []
+        options: List[str] = []
 
-        console.print(menu_table)
-        console.print()
+        for section_name, actions in sections:
+            for action in actions:
+                label = f"{action.get_display_name()} - {action.description}"
+                if section_name:
+                    label = f"[{section_name}] {label}"
+                options.append(label)
+                ordered_actions.append(action)
 
-        # Get user choice
-        choices = [str(i) for i in range(len(self.applicable_actions) + 1)]
-        completer = WordCompleter(choices)
-        validator = NumberValidator(len(self.applicable_actions))
+        options.append("❌ Exit")
+        self.applicable_actions = ordered_actions
 
+        console.print("\n[bold cyan]Available Actions[/bold cyan]")
+        console.print("[dim]Use arrow keys to pick next action. Esc exits.[/dim]\n")
+
+        # Get user choice with radiolist
         try:
-            choice = prompt(
-                "Select an action (0 to exit): ",
-                completer=completer,
-                validator=validator,
+            choice_num = select_number_from_menu(
+                title="Git Maestro",
+                text="Select an action:",
+                options=options,
+                default_index=None,
+                show_numbers=True,
             )
 
-            choice_num = int(choice)
-
-            if choice_num == 0:
+            if choice_num is None or choice_num == len(options):
+                # User cancelled or selected Exit
                 console.print("\n[bold yellow]👋 Goodbye![/bold yellow]\n")
                 return False
 
@@ -186,9 +154,6 @@ class Menu:
 
             return True
 
-        except (ValueError, IndexError):
-            console.print("[bold red]Invalid choice. Please try again.[/bold red]")
-            return True
         except KeyboardInterrupt:
             console.print("\n[bold yellow]👋 Goodbye![/bold yellow]\n")
             return False
@@ -199,16 +164,20 @@ class Menu:
     def run(self):
         """Run the interactive menu loop."""
         try:
+            iteration = 0
             while True:
-                console.clear()
+                if iteration:
+                    console.print()
+                    console.rule("[dim]Next actions[/dim]")
+                else:
+                    console.print()
+
                 self.display_state()
                 should_continue = self.display_menu()
                 if not should_continue:
                     break
 
-                console.print("\n[dim]Press Enter to continue...[/dim]")
-                prompt("")
-
+                iteration += 1
         except KeyboardInterrupt:
             console.print("\n[bold yellow]👋 Goodbye![/bold yellow]\n")
         except Exception as e:

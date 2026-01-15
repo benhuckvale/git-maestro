@@ -3,9 +3,9 @@
 import git
 from rich.console import Console
 from prompt_toolkit import prompt
-from prompt_toolkit.completion import WordCompleter
 from .base import Action
 from git_maestro.state import RepoState
+from git_maestro.selection_helper import select_number_from_menu
 
 console = Console()
 
@@ -31,30 +31,28 @@ class InitRepoAction(Action):
             )
 
             # Ask for initial branch name
-            console.print("\n[yellow]Select initial branch name:[/yellow]")
-            console.print("1. main")
-            console.print("2. master")
-            console.print("3. develop")
-            console.print("4. custom")
-
-            branch_completer = WordCompleter(
-                ["1", "2", "3", "4", "main", "master", "develop", "custom"]
+            choice = select_number_from_menu(
+                title="Initial Branch",
+                text="Select initial branch name:",
+                options=[
+                    "main",
+                    "master",
+                    "develop",
+                    "custom (enter name)",
+                ],
+                default_index=0,
             )
-            choice = prompt("Choice (1-4): ", completer=branch_completer, default="1")
 
-            # Map choice to branch name
-            branch_map = {
-                "1": "main",
-                "2": "master",
-                "3": "develop",
-                "main": "main",
-                "master": "master",
-                "develop": "develop",
-            }
-
-            if choice.lower() in branch_map:
-                branch_name = branch_map[choice.lower()]
-            elif choice == "4" or choice.lower() == "custom":
+            if choice is None:
+                console.print("[yellow]Cancelled, using 'main'[/yellow]")
+                branch_name = "main"
+            elif choice == 1:
+                branch_name = "main"
+            elif choice == 2:
+                branch_name = "master"
+            elif choice == 3:
+                branch_name = "develop"
+            elif choice == 4:
                 console.print("\n[yellow]Enter custom branch name:[/yellow]")
                 branch_name = prompt("Branch name: ", default="main")
             else:

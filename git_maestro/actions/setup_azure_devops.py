@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Optional
 from rich.console import Console
 from prompt_toolkit import prompt
-from prompt_toolkit.completion import WordCompleter
 
 from .base import Action
 from git_maestro.state import RepoState
@@ -13,6 +12,7 @@ from git_maestro.ssh_config import SSHConfig
 from git_maestro.description_helper import get_description_options
 from git_maestro.azure import parse_azure_url, AzureClient
 from git_maestro.push_helper import push_to_remote
+from git_maestro.selection_helper import select_number_from_menu
 
 console = Console()
 
@@ -128,42 +128,40 @@ class SetupAzureDevOpsAction(Action):
         options = get_description_options(state.path, repo_name, use_ai=True)
 
         if options:
-            # Show available options
-            console.print("\n[cyan]Suggestions:[/cyan]")
-            for i, (label, desc) in enumerate(options, 1):
+            # Build menu options
+            menu_options = []
+            for label, desc in options:
                 # Truncate long descriptions for display
-                display_desc = desc if len(desc) <= 80 else desc[:77] + "..."
-                console.print(f"  [dim]{i}.[/dim] [{label}] {display_desc}")
+                display_desc = desc if len(desc) <= 60 else desc[:57] + "..."
+                menu_options.append(f"[{label}] {display_desc}")
 
-            console.print(
-                f"  [dim]{len(options) + 1}.[/dim] [Enter custom description]"
-            )
-            console.print(f"  [dim]{len(options) + 2}.[/dim] [Skip - no description]")
-
-            # Build completer
-            choices = [str(i) for i in range(1, len(options) + 3)]
-            completer = WordCompleter(choices)
+            menu_options.append("Enter custom description")
+            menu_options.append("Skip - no description")
 
             # Get user choice
-            choice = prompt(
-                f"\nChoice (1-{len(options) + 2}): ", completer=completer, default="1"
+            choice_num = select_number_from_menu(
+                title="Repository Description",
+                text="Select a description or enter a custom one:",
+                options=menu_options,
+                default_index=0,
             )
 
-            try:
-                choice_num = int(choice)
-                if 1 <= choice_num <= len(options):
-                    # User selected a suggestion
-                    selected_desc = options[choice_num - 1][1]
-                    console.print(f"[dim]Selected: {selected_desc}[/dim]")
-                    return selected_desc
-                elif choice_num == len(options) + 1:
-                    # Custom description
-                    return prompt("Enter custom description: ", default="")
-                elif choice_num == len(options) + 2:
-                    # Skip
-                    return ""
-            except (ValueError, IndexError):
-                pass
+            if choice_num is None:
+                # Cancelled, skip
+                return ""
+            elif 1 <= choice_num <= len(options):
+                # User selected a suggestion
+                selected_desc = options[choice_num - 1][1]
+                console.print(f"[dim]Selected: {selected_desc}[/dim]")
+                return selected_desc
+            elif choice_num == len(options) + 1:
+                # Custom description
+                return prompt("Enter custom description: ", default="")
+            elif choice_num == len(options) + 2:
+                # Skip
+                return ""
+            else:
+                return ""
 
         # Fallback to manual entry
         return prompt("Description: ", default="")

@@ -11,6 +11,7 @@ from .setup_remote import SetupRemoteAction
 from git_maestro.state import RepoState
 from git_maestro.ssh_config import SSHConfig
 from git_maestro.push_helper import push_to_remote
+from git_maestro.selection_helper import select_number_from_menu
 
 console = Console()
 
@@ -198,16 +199,21 @@ class CreateRemoteRepoAction(Action):
             description = self.setup_action._get_description(state, repo_name)
 
             if provider == "github":
-                console.print("\n[yellow]Select repository visibility:[/yellow]")
-                console.print("1. Public")
-                console.print("2. Private")
-                from prompt_toolkit.completion import WordCompleter
-
-                visibility_completer = WordCompleter(["1", "2", "public", "private"])
-                visibility_choice = prompt(
-                    "Visibility (1-2): ", completer=visibility_completer, default="1"
+                visibility_choice = select_number_from_menu(
+                    title="Repository Visibility",
+                    text="Select repository visibility:",
+                    options=[
+                        "Public",
+                        "Private",
+                    ],
+                    default_index=0,
                 )
-                is_private = visibility_choice in ["2", "private"]
+
+                if visibility_choice is None:
+                    console.print("[yellow]Cancelled, using Public[/yellow]")
+                    is_private = False
+                else:
+                    is_private = (visibility_choice == 2)
 
                 # Create GitHub repository
                 console.print(
@@ -226,28 +232,28 @@ class CreateRemoteRepoAction(Action):
                 )
 
             else:  # gitlab
-                console.print("\n[yellow]Select repository visibility:[/yellow]")
-                console.print("1. Public")
-                console.print("2. Internal (visible to authenticated users)")
-                console.print("3. Private")
-                from prompt_toolkit.completion import WordCompleter
-
-                visibility_completer = WordCompleter(
-                    ["1", "2", "3", "public", "internal", "private"]
-                )
-                visibility_choice = prompt(
-                    "Visibility (1-3): ", completer=visibility_completer, default="1"
+                visibility_choice = select_number_from_menu(
+                    title="Repository Visibility",
+                    text="Select repository visibility:",
+                    options=[
+                        "Public",
+                        "Internal (visible to authenticated users)",
+                        "Private",
+                    ],
+                    default_index=0,
                 )
 
-                visibility_map = {
-                    "1": "public",
-                    "2": "internal",
-                    "3": "private",
-                    "public": "public",
-                    "internal": "internal",
-                    "private": "private",
-                }
-                visibility = visibility_map.get(visibility_choice.lower(), "public")
+                if visibility_choice is None:
+                    console.print("[yellow]Cancelled, using Public[/yellow]")
+                    visibility = "public"
+                elif visibility_choice == 1:
+                    visibility = "public"
+                elif visibility_choice == 2:
+                    visibility = "internal"
+                elif visibility_choice == 3:
+                    visibility = "private"
+                else:
+                    visibility = "public"
 
                 # Create GitLab repository
                 console.print(

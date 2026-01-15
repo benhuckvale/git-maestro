@@ -2,10 +2,10 @@
 
 from rich.console import Console
 from prompt_toolkit import prompt
-from prompt_toolkit.completion import WordCompleter
 from .base import Action
 from git_maestro.state import RepoState
 from git_maestro.push_helper import push_to_remote
+from git_maestro.selection_helper import select_number_from_menu
 
 console = Console()
 
@@ -42,16 +42,22 @@ class InitialCommitAction(Action):
                     console.print(f"  [dim]... and {len(untracked) - 10} more[/dim]")
 
             # Ask what to include in initial commit
-            console.print(
-                "\n[yellow]What should be included in the initial commit?[/yellow]"
+            choice = select_number_from_menu(
+                title="Initial Commit",
+                text="What should be included in the initial commit?",
+                options=[
+                    "All existing files",
+                    "Only README and .gitignore (if they exist)",
+                    "Create an empty commit",
+                ],
+                default_index=0,
             )
-            console.print("1. All existing files")
-            console.print("2. Only README and .gitignore (if they exist)")
-            console.print("3. Create an empty commit")
-            console.print("4. Select files manually (not implemented yet)")
 
-            choice_completer = WordCompleter(["1", "2", "3", "4"])
-            choice = prompt("Choice (1-3): ", completer=choice_completer, default="1")
+            if choice is None:
+                console.print("[yellow]Cancelled[/yellow]")
+                return False
+
+            choice = str(choice)
 
             files_to_add = []
             allow_empty = False
@@ -86,31 +92,28 @@ class InitialCommitAction(Action):
             commit_message = prompt("Message: ", default="Initial commit")
 
             # Select branch name
-            console.print("\n[yellow]Select default branch name:[/yellow]")
-            console.print("1. main")
-            console.print("2. master")
-            console.print("3. develop")
-            console.print("4. custom")
-
-            branch_completer = WordCompleter(
-                ["1", "2", "3", "4", "main", "master", "develop"]
+            branch_choice = select_number_from_menu(
+                title="Branch Name",
+                text="Select default branch name:",
+                options=[
+                    "main",
+                    "master",
+                    "develop",
+                    "custom (enter name)",
+                ],
+                default_index=0,
             )
-            branch_choice = prompt(
-                "Branch (1-4): ", completer=branch_completer, default="1"
-            )
 
-            branch_map = {
-                "1": "main",
-                "2": "master",
-                "3": "develop",
-                "main": "main",
-                "master": "master",
-                "develop": "develop",
-            }
-
-            if branch_choice.lower() in branch_map:
-                branch_name = branch_map[branch_choice.lower()]
-            elif branch_choice == "4":
+            if branch_choice is None:
+                console.print("[yellow]Cancelled, using 'main'[/yellow]")
+                branch_name = "main"
+            elif branch_choice == 1:
+                branch_name = "main"
+            elif branch_choice == 2:
+                branch_name = "master"
+            elif branch_choice == 3:
+                branch_name = "develop"
+            elif branch_choice == 4:
                 branch_name = prompt("Enter branch name: ", default="main")
             else:
                 branch_name = "main"

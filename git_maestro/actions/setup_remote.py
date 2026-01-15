@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Optional
 from rich.console import Console
 from prompt_toolkit import prompt
-from prompt_toolkit.completion import WordCompleter
 from github import Github, GithubException
 import gitlab
 from .base import Action
@@ -13,6 +12,7 @@ from git_maestro.state import RepoState
 from git_maestro.ssh_config import SSHConfig
 from git_maestro.description_helper import get_description_options
 from git_maestro.push_helper import push_to_remote
+from git_maestro.selection_helper import select_number_from_menu
 
 console = Console()
 
@@ -147,42 +147,40 @@ class SetupRemoteAction(Action):
         options = get_description_options(state.path, repo_name, use_ai=True)
 
         if options:
-            # Show available options
-            console.print("\n[cyan]Suggestions:[/cyan]")
-            for i, (label, desc) in enumerate(options, 1):
+            # Build menu options
+            menu_options = []
+            for label, desc in options:
                 # Truncate long descriptions for display
-                display_desc = desc if len(desc) <= 80 else desc[:77] + "..."
-                console.print(f"  [dim]{i}.[/dim] [{label}] {display_desc}")
+                display_desc = desc if len(desc) <= 60 else desc[:57] + "..."
+                menu_options.append(f"[{label}] {display_desc}")
 
-            console.print(
-                f"  [dim]{len(options) + 1}.[/dim] [Enter custom description]"
-            )
-            console.print(f"  [dim]{len(options) + 2}.[/dim] [Skip - no description]")
-
-            # Build completer
-            choices = [str(i) for i in range(1, len(options) + 3)]
-            completer = WordCompleter(choices)
+            menu_options.append("Enter custom description")
+            menu_options.append("Skip - no description")
 
             # Get user choice
-            choice = prompt(
-                f"\nChoice (1-{len(options) + 2}): ", completer=completer, default="1"
+            choice_num = select_number_from_menu(
+                title="Repository Description",
+                text="Select a description or enter a custom one:",
+                options=menu_options,
+                default_index=0,
             )
 
-            try:
-                choice_num = int(choice)
-                if 1 <= choice_num <= len(options):
-                    # User selected a suggestion
-                    selected_desc = options[choice_num - 1][1]
-                    console.print(f"[dim]Selected: {selected_desc}[/dim]")
-                    return selected_desc
-                elif choice_num == len(options) + 1:
-                    # Custom description
-                    return prompt("Enter custom description: ", default="")
-                elif choice_num == len(options) + 2:
-                    # Skip
-                    return ""
-            except (ValueError, IndexError):
-                pass
+            if choice_num is None:
+                # Cancelled, skip
+                return ""
+            elif 1 <= choice_num <= len(options):
+                # User selected a suggestion
+                selected_desc = options[choice_num - 1][1]
+                console.print(f"[dim]Selected: {selected_desc}[/dim]")
+                return selected_desc
+            elif choice_num == len(options) + 1:
+                # Custom description
+                return prompt("Enter custom description: ", default="")
+            elif choice_num == len(options) + 2:
+                # Skip
+                return ""
+            else:
+                return ""
 
         # Fallback to manual entry
         return prompt("Description: ", default="")
@@ -194,35 +192,43 @@ class SetupRemoteAction(Action):
 
             # Ask for provider
             console.print("\n[yellow]Select a git hosting provider:[/yellow]")
-            console.print("1. GitHub (will create repository via API)")
-            console.print("2. GitLab (will create repository via API)")
-            console.print("3. Azure DevOps (manual repository creation)")
-            console.print("4. Other (just add remote URL, won't create repository)")
+            provider_choice = select_number_from_menu(
+                title="Remote Provider",
+                text="Select a remote provider:",
+                options=[
+                    "GitHub (will create repository via API)",
+                    "GitLab (will create repository via API)",
+                    "Azure DevOps (manual repository creation)",
+                    "Other (just add remote URL, won't create repository)",
+                ],
+                default_index=0,
+            )
 
-            provider_completer = WordCompleter(
-                ["1", "2", "3", "4", "github", "gitlab", "azure", "other"]
-            )
-            provider_choice = prompt(
-                "Choice (1-4): ", completer=provider_completer, default="1"
-            )
+            if provider_choice is None:
+                console.print("[yellow]Cancelled[/yellow]")
+                return False
 
             # Handle GitHub
-            if provider_choice in ["1", "github"]:
+            if provider_choice == 1:
                 return self._setup_github(state)
 
             # Handle GitLab
-            elif provider_choice in ["2", "gitlab"]:
+            elif provider_choice == 2:
                 return self._setup_gitlab(state)
 
             # Handle Azure DevOps
-            elif provider_choice in ["3", "azure"]:
+            elif provider_choice == 3:
                 from .setup_azure_devops import SetupAzureDevOpsAction
                 azure_action = SetupAzureDevOpsAction()
                 return azure_action.execute(state)
 
             # Handle other/manual
-            else:
+            elif provider_choice == 4:
                 return self._setup_manual(state)
+
+            else:
+                console.print("[yellow]Invalid choice[/yellow]")
+                return False
 
         except KeyboardInterrupt:
             console.print("\n[yellow]Cancelled[/yellow]")
@@ -281,15 +287,21 @@ class SetupRemoteAction(Action):
             # Get description with smart suggestions
             description = self._get_description(state, repo_name)
 
-            console.print("\n[yellow]Select repository visibility:[/yellow]")
-            console.print("1. Public")
-            console.print("2. Private")
-            visibility_completer = WordCompleter(["1", "2", "public", "private"])
-            visibility_choice = prompt(
-                "Visibility (1-2): ", completer=visibility_completer, default="1"
+            visibility_choice = select_number_from_menu(
+                title="Repository Visibility",
+                text="Select repository visibility:",
+                options=[
+                    "Public",
+                    "Private",
+                ],
+                default_index=0,
             )
 
-            is_private = visibility_choice in ["2", "private"]
+            if visibility_choice is None:
+                console.print("[yellow]Cancelled, using Public[/yellow]")
+                is_private = False
+            else:
+                is_private = (visibility_choice == 2)
 
             # Create repository
             console.print(f"\n[cyan]Creating GitHub repository '{repo_name}'...[/cyan]")
@@ -383,27 +395,28 @@ class SetupRemoteAction(Action):
             # Get description with smart suggestions
             description = self._get_description(state, repo_name)
 
-            console.print("\n[yellow]Select repository visibility:[/yellow]")
-            console.print("1. Public")
-            console.print("2. Internal (visible to authenticated users)")
-            console.print("3. Private")
-            visibility_completer = WordCompleter(
-                ["1", "2", "3", "public", "internal", "private"]
-            )
-            visibility_choice = prompt(
-                "Visibility (1-3): ", completer=visibility_completer, default="1"
+            visibility_choice = select_number_from_menu(
+                title="Repository Visibility",
+                text="Select repository visibility:",
+                options=[
+                    "Public",
+                    "Internal (visible to authenticated users)",
+                    "Private",
+                ],
+                default_index=0,
             )
 
-            # Map choice to GitLab visibility value
-            visibility_map = {
-                "1": "public",
-                "2": "internal",
-                "3": "private",
-                "public": "public",
-                "internal": "internal",
-                "private": "private",
-            }
-            visibility = visibility_map.get(visibility_choice.lower(), "public")
+            if visibility_choice is None:
+                console.print("[yellow]Cancelled, using Public[/yellow]")
+                visibility = "public"
+            elif visibility_choice == 1:
+                visibility = "public"
+            elif visibility_choice == 2:
+                visibility = "internal"
+            elif visibility_choice == 3:
+                visibility = "private"
+            else:
+                visibility = "public"
 
             # Create repository
             console.print(f"\n[cyan]Creating GitLab repository '{repo_name}'...[/cyan]")

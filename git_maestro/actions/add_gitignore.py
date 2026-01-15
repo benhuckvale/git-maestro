@@ -1,10 +1,9 @@
 """Action to add a .gitignore file."""
 
 from rich.console import Console
-from prompt_toolkit import prompt
-from prompt_toolkit.completion import WordCompleter
 from .base import Action
 from git_maestro.state import RepoState
+from git_maestro.selection_helper import select_number_from_menu
 
 console = Console()
 
@@ -127,27 +126,28 @@ class AddGitignoreAction(Action):
             console.print("[bold cyan]Creating .gitignore...[/bold cyan]")
 
             # Ask for template type
-            console.print("\n[yellow]Select a template type:[/yellow]")
-            console.print("1. Python")
-            console.print("2. Node.js")
-            console.print("3. Generic")
-
-            template_completer = WordCompleter(
-                ["1", "2", "3", "python", "node", "generic"]
+            choice = select_number_from_menu(
+                title="Gitignore Template",
+                text="Select a template type:",
+                options=[
+                    "Python",
+                    "Node.js",
+                    "Generic",
+                ],
+                default_index=0,
             )
-            choice = prompt("Choice (1-3): ", completer=template_completer, default="1")
 
-            # Map choice to template
-            template_map = {
-                "1": "python",
-                "2": "node",
-                "3": "generic",
-                "python": "python",
-                "node": "node",
-                "generic": "generic",
-            }
-
-            template_key = template_map.get(choice.lower(), "generic")
+            if choice is None:
+                console.print("[yellow]Cancelled, using Generic[/yellow]")
+                template_key = "generic"
+            elif choice == 1:
+                template_key = "python"
+            elif choice == 2:
+                template_key = "node"
+            elif choice == 3:
+                template_key = "generic"
+            else:
+                template_key = "generic"
             gitignore_content = GITIGNORE_TEMPLATES[template_key]
 
             # Write .gitignore file
