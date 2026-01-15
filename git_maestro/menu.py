@@ -1,7 +1,8 @@
 """Menu system for git-maestro using rich and inline prompts."""
 
-from typing import List
+from typing import List, Tuple
 
+from questionary import Choice
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
@@ -85,15 +86,20 @@ class Menu:
         """Get list of actions applicable to the current state."""
         return [action for action in self.actions if action.is_applicable(self.state)]
 
-    def display_menu(self) -> bool:
-        """Display the action menu and handle user input. Returns True if user wants to continue."""
+    def display_menu(self) -> Tuple[bool, bool]:
+        """
+        Display the action menu and handle user input.
+
+        Returns:
+            Tuple[bool, bool]: (should_continue, show_state_next)
+        """
         applicable_actions = self.get_applicable_actions()
 
         if not applicable_actions:
             console.print(
                 "\n[bold green]✨ Everything looks good! No actions needed.[/bold green]\n"
             )
-            return False
+            return False, True
 
         # Group actions by category so we can surface the category in the prompt text
         setup_actions = [a for a in applicable_actions if a.category == "setup"]
@@ -125,22 +131,46 @@ class Menu:
         self.applicable_actions = ordered_actions
 
         console.print("\n[bold cyan]Available Actions[/bold cyan]")
-        console.print("[dim]Use arrow keys to pick next action. Esc exits.[/dim]\n")
+        console.print("[dim]Use arrow keys to pick next action. Press 's' to show the repository state. Esc exits.[/dim]\n")
 
-        # Get user choice with radiolist
-        try:
-            choice_num = select_number_from_menu(
-                title="Git Maestro",
-                text="Select an action:",
-                options=options,
-                default_index=None,
-                show_numbers=True,
-            )
+        show_state_choice = Choice(
+            title="👀 Show repository state (press s)",
+            value="show_state",
+            shortcut_key="s",
+        )
+        extra_choices = [show_state_choice]
+
+        instruction = "Press enter to confirm, 's' to show the repository state, or esc to cancel"
+
+        while True:
+            try:
+                choice_num = select_number_from_menu(
+                    title="Git Maestro",
+                    text="Select an action:",
+                    options=options,
+                    default_index=None,
+                    show_numbers=True,
+                    extra_choices=extra_choices,
+                    enable_shortcuts=True,
+                    instruction=instruction,
+                    instant_values=["show_state"],
+                )
+            except KeyboardInterrupt:
+                console.print("\n[bold yellow]👋 Goodbye![/bold yellow]\n")
+                return False, True
+            except EOFError:
+                console.print("\n[bold yellow]👋 Goodbye![/bold yellow]\n")
+                return False, True
+
+            if choice_num == "show_state":
+                console.print()
+                self.display_state()
+                continue
 
             if choice_num is None or choice_num == len(options):
                 # User cancelled or selected Exit
                 console.print("\n[bold yellow]👋 Goodbye![/bold yellow]\n")
-                return False
+                return False, True
 
             # Execute the chosen action
             selected_action = self.applicable_actions[choice_num - 1]
@@ -152,28 +182,26 @@ class Menu:
                 self.state.refresh()
                 console.print()
 
-            return True
-
-        except KeyboardInterrupt:
-            console.print("\n[bold yellow]👋 Goodbye![/bold yellow]\n")
-            return False
-        except EOFError:
-            console.print("\n[bold yellow]👋 Goodbye![/bold yellow]\n")
-            return False
+            return True, selected_action.modifies_state()
 
     def run(self):
         """Run the interactive menu loop."""
         try:
             iteration = 0
+            show_state_next = True
             while True:
+                console.print()
                 if iteration:
-                    console.print()
                     console.rule("[dim]Next actions[/dim]")
-                else:
-                    console.print()
 
-                self.display_state()
-                should_continue = self.display_menu()
+                if show_state_next:
+                    self.display_state()
+                else:
+                    console.print(
+                        "[dim]Press 's' in the menu if you want to see the repository state again.[/dim]\n"
+                    )
+
+                should_continue, show_state_next = self.display_menu()
                 if not should_continue:
                     break
 

@@ -1,6 +1,6 @@
 """Helper functions for interactive selection using questionary."""
 
-from typing import List, Optional
+from typing import List, Optional, Sequence, Set, Union
 
 import questionary
 from questionary import Choice, Style
@@ -29,7 +29,11 @@ def select_number_from_menu(
     options: List[str],
     default_index: Optional[int] = 0,
     show_numbers: bool = True,
-) -> Optional[int]:
+    extra_choices: Optional[List[Choice]] = None,
+    enable_shortcuts: bool = False,
+    instruction: Optional[str] = None,
+    instant_values: Optional[Sequence[Union[int, str]]] = None,
+) -> Optional[Union[int, str]]:
     """
     Display an inline selection menu for numbered options.
 
@@ -66,24 +70,49 @@ def select_number_from_menu(
         display_text = f"{index + 1}. {label}" if show_numbers else label
         choices.append(Choice(title=display_text, value=index + 1))
 
-    default_choice: Optional[str] = None
-    if default_index is not None and 0 <= default_index < len(choices):
-        default_choice = choices[default_index].title
+    if extra_choices:
+        choices.extend(extra_choices)
 
-    instruction = "Press enter to confirm or esc to cancel"
+    default_choice: Optional[int] = None
+    if default_index is not None and 0 <= default_index < len(options):
+        default_choice = choices[default_index].value  # type: ignore[attr-defined]
+
+    instruction_text = instruction or "Press enter to confirm or esc to cancel"
+
+    question = questionary.select(
+        text.strip(),
+        choices=choices,
+        default=default_choice,
+        style=custom_style,
+        instruction=instruction_text,
+        use_shortcuts=enable_shortcuts,
+        use_arrow_keys=True,
+    )
+
+    # Register instant shortcut handlers so specific keys can act immediately
+    if instant_values:
+        instant_set: Set[Union[int, str]] = set(instant_values)
+        bindings = question.application.key_bindings
+
+        for choice in choices:
+            if choice.value not in instant_set:
+                continue
+            shortcut = choice.shortcut_key
+            if not isinstance(shortcut, str):
+                continue
+
+            def _register(binding_key: str, return_value: Union[int, str]):
+                @bindings.add(binding_key, eager=True)
+                def _instant_choice(event):
+                    event.app.exit(result=return_value)
+
+            _register(shortcut, choice.value)
+            if len(shortcut) == 1 and shortcut.isalpha():
+                _register(shortcut.upper(), choice.value)
 
     try:
-        result = questionary.select(
-            text.strip(),
-            choices=choices,
-            default=default_choice,
-            style=custom_style,
-            instruction=instruction,
-            use_shortcuts=False,
-            use_arrow_keys=True,
-        ).ask()
-
-        return result if result is None else int(result)
+        result = question.ask()
+        return result
     except (KeyboardInterrupt, EOFError):
         return None
 
