@@ -44,21 +44,21 @@ def get_git_info() -> tuple[str, str, bool]:
         commit = subprocess.check_output(
             ["git", "-C", str(package_dir), "rev-parse", "--short", "HEAD"],
             stderr=subprocess.DEVNULL,
-            text=True
+            text=True,
         ).strip()
 
         # Get git describe (tag-based version)
         describe = subprocess.check_output(
             ["git", "-C", str(package_dir), "describe", "--tags", "--always"],
             stderr=subprocess.DEVNULL,
-            text=True
+            text=True,
         ).strip()
 
         # Check if working directory is dirty
         status = subprocess.check_output(
             ["git", "-C", str(package_dir), "status", "--porcelain"],
             stderr=subprocess.DEVNULL,
-            text=True
+            text=True,
         ).strip()
         is_dirty = bool(status)
 
@@ -93,7 +93,8 @@ def get_all_actions():
 
 def show_help():
     """Show help message."""
-    console.print("""[bold cyan]git-maestro[/bold cyan] - A convenient TUI for managing git repositories
+    console.print(
+        """[bold cyan]git-maestro[/bold cyan] - A convenient TUI for managing git repositories
 
 [bold]Usage:[/bold]
   git-maestro [PATH]          Start interactive menu for PATH (default: current directory)
@@ -104,7 +105,8 @@ def show_help():
 
 [bold]Commands:[/bold]
   mcp                         Run as MCP stdio server for AI assistants
-""")
+"""
+    )
 
 
 def main_interactive(path: Path):
@@ -152,7 +154,8 @@ def main():
             if first_arg == "mcp":
                 # Check for help on mcp subcommand
                 if len(sys.argv) > 2 and sys.argv[2] in ("-h", "--help"):
-                    console.print("""[bold cyan]git-maestro mcp[/bold cyan] - MCP stdio server for AI assistants
+                    console.print(
+                        """[bold cyan]git-maestro mcp[/bold cyan] - MCP stdio server for AI assistants
 
 [bold]Usage:[/bold]
   git-maestro mcp             Start the MCP server
@@ -173,7 +176,8 @@ def main():
       }
     }
   }
-""")
+"""
+                    )
                     sys.exit(0)
                 main_mcp()
                 return

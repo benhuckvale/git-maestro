@@ -291,10 +291,9 @@ class MCPServer:
             module_path = Path(module_file).parent.parent.resolve()
 
             # Check if this looks like a development installation (has .git, pyproject.toml, etc.)
-            is_dev = (
-                (module_path / ".git").exists()
-                or (module_path / "pyproject.toml").exists()
-            )
+            is_dev = (module_path / ".git").exists() or (
+                module_path / "pyproject.toml"
+            ).exists()
 
             if is_dev:
                 # Only refuse if Claude is actively working in this directory
@@ -535,9 +534,7 @@ class MCPServer:
             "id": msg_id,
         }
 
-    def handle_call_tool(
-        self, params: dict[str, Any], msg_id: Any
-    ) -> dict[str, Any]:
+    def handle_call_tool(self, params: dict[str, Any], msg_id: Any) -> dict[str, Any]:
         """Handle tools/call request."""
         tool_name = params.get("name")
         tool_input = params.get("arguments", {})
@@ -859,7 +856,8 @@ class MCPServer:
                     "jsonrpc": "2.0",
                     "error": {
                         "code": -32603,
-                        "message": f"Failed to check status for run {run_id}" + (f" job {job_id}" if job_id else ""),
+                        "message": f"Failed to check status for run {run_id}"
+                        + (f" job {job_id}" if job_id else ""),
                     },
                     "id": msg_id,
                 }
@@ -1105,7 +1103,8 @@ class MCPServer:
                     "jsonrpc": "2.0",
                     "error": {
                         "code": -32603,
-                        "message": f"Failed to check status for run {run_id}" + (f" stage {stage_id}" if stage_id else ""),
+                        "message": f"Failed to check status for run {run_id}"
+                        + (f" stage {stage_id}" if stage_id else ""),
                     },
                     "id": msg_id,
                 }
@@ -1346,7 +1345,8 @@ class MCPServer:
                     "jsonrpc": "2.0",
                     "error": {
                         "code": -32603,
-                        "message": f"Failed to check status for pipeline {pipeline_id}" + (f" job {job_id}" if job_id else ""),
+                        "message": f"Failed to check status for pipeline {pipeline_id}"
+                        + (f" job {job_id}" if job_id else ""),
                     },
                     "id": msg_id,
                 }

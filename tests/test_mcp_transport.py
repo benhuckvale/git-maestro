@@ -62,12 +62,13 @@ def _parse_json_lines(raw: bytes) -> list[dict]:
     return parsed
 
 
-def _run_mcp_server_stdin_stdout(input_bytes: bytes, cwd: Path) -> subprocess.CompletedProcess:
+def _run_mcp_server_stdin_stdout(
+    input_bytes: bytes, cwd: Path
+) -> subprocess.CompletedProcess:
     repo_root = Path(__file__).resolve().parents[1]
     env = os.environ.copy()
-    env["PYTHONPATH"] = (
-        str(repo_root)
-        + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+    env["PYTHONPATH"] = str(repo_root) + (
+        os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else ""
     )
 
     return subprocess.run(

@@ -116,7 +116,11 @@ class RepoState:
             return "github"
         elif "gitlab.com" in remote_lower or "gitlab" in remote_lower:
             return "gitlab"
-        elif "dev.azure.com" in remote_lower or "ssh.dev.azure.com" in remote_lower or "visualstudio.com" in remote_lower:
+        elif (
+            "dev.azure.com" in remote_lower
+            or "ssh.dev.azure.com" in remote_lower
+            or "visualstudio.com" in remote_lower
+        ):
             return "azure"
         else:
             return "unknown"

@@ -19,16 +19,17 @@ class GetGitlabPipelinesAction(Action):
     def __init__(self):
         super().__init__()
         self.name = "View GitLab Pipelines Run History and Logs"
-        self.description = "Browse and download logs from specific GitLab Pipelines runs"
+        self.description = (
+            "Browse and download logs from specific GitLab Pipelines runs"
+        )
         self.emoji = "📋"
         self.category = "info"
         self.storage_dir = "traces"  # Will create .git-maestro/traces/
 
     def is_applicable(self, state: RepoState) -> bool:
         """Only show if we have a GitLab remote with GitLab Pipelines history."""
-        return (
-            state.has_fact("gitlab_pipelines_checked")
-            and state.get_fact("gitlab_pipelines_has_runs", False)
+        return state.has_fact("gitlab_pipelines_checked") and state.get_fact(
+            "gitlab_pipelines_has_runs", False
         )
 
     def _get_stored_token(self) -> Optional[str]:
@@ -48,6 +49,7 @@ class GetGitlabPipelinesAction(Action):
         """Get authenticated GitLab client."""
         try:
             from git_maestro.gitlab import GitLabClient
+
             return GitLabClient(remote_url, token)
         except Exception:
             return None
@@ -169,7 +171,9 @@ class GetGitlabPipelinesAction(Action):
             jobs = client.get_pipeline_jobs(pipeline_id)
 
             if not jobs:
-                console.print(f"[yellow]No jobs found in pipeline {pipeline_id}[/yellow]")
+                console.print(
+                    f"[yellow]No jobs found in pipeline {pipeline_id}[/yellow]"
+                )
                 return []
 
             # Format job info
@@ -281,6 +285,7 @@ class GetGitlabPipelinesAction(Action):
 
             # Download log to file
             import re
+
             safe_name = re.sub(r"[^\w\-.]", "_", job.name)
             log_file = pipeline_dir / f"job-{job.id}-{safe_name}.log"
 

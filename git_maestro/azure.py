@@ -209,9 +209,13 @@ class AzureClient:
         pipelines_client = connection.clients.get_pipelines_client()
 
         log_collection = pipelines_client.list_logs(self.project, pipeline_id, run_id)
-        return list(log_collection.logs) if log_collection and log_collection.logs else []
+        return (
+            list(log_collection.logs) if log_collection and log_collection.logs else []
+        )
 
-    def get_logs_for_stage(self, pipeline_id: int, run_id: int, stage_id: str) -> Optional[bytes]:
+    def get_logs_for_stage(
+        self, pipeline_id: int, run_id: int, stage_id: str
+    ) -> Optional[bytes]:
         """Get logs for a specific stage in a pipeline run.
 
         Args:
@@ -265,8 +269,7 @@ class AzureClient:
             build_client = connection.clients.get_build_client()
 
             timeline = build_client.get_build_timeline(
-                project=self.project,
-                build_id=build_id
+                project=self.project, build_id=build_id
             )
             return timeline
         except Exception:
@@ -287,9 +290,7 @@ class AzureClient:
             build_client = connection.clients.get_build_client()
 
             log_content = build_client.get_build_log(
-                project=self.project,
-                build_id=build_id,
-                log_id=log_id
+                project=self.project, build_id=build_id, log_id=log_id
             )
 
             # The response might be a generator/stream - read it properly
@@ -302,10 +303,10 @@ class AzureClient:
                         chunks = []
                         for chunk in log_content:
                             if isinstance(chunk, bytes):
-                                chunks.append(chunk.decode('utf-8', errors='replace'))
+                                chunks.append(chunk.decode("utf-8", errors="replace"))
                             else:
                                 chunks.append(str(chunk))
-                        content = ''.join(chunks)
+                        content = "".join(chunks)
                         return content if content else None
                     except TypeError:
                         # Not iterable, just convert to string
@@ -366,9 +367,9 @@ class AzureClient:
         timeline = self.get_build_timeline(build_id)
 
         result = {
-            'build_id': build_id,
-            'timeline_id': timeline.id if timeline else None,
-            'jobs': []
+            "build_id": build_id,
+            "timeline_id": timeline.id if timeline else None,
+            "jobs": [],
         }
 
         if not timeline or not timeline.records:
@@ -383,58 +384,74 @@ class AzureClient:
                 continue
 
             job_info = {
-                'id': record.id,
-                'name': record.name,
-                'type': record.type,
-                'state': record.state,
-                'result': getattr(record, 'result', None),
-                'start_time': record.start_time.isoformat() if hasattr(record, 'start_time') and record.start_time else None,
-                'finish_time': record.finish_time.isoformat() if hasattr(record, 'finish_time') and record.finish_time else None,
-                'error_count': getattr(record, 'error_count', 0),
-                'warning_count': getattr(record, 'warning_count', 0),
-                'issues': self._extract_issues(record),
-                'log_content': None,
-                'tasks': []
+                "id": record.id,
+                "name": record.name,
+                "type": record.type,
+                "state": record.state,
+                "result": getattr(record, "result", None),
+                "start_time": (
+                    record.start_time.isoformat()
+                    if hasattr(record, "start_time") and record.start_time
+                    else None
+                ),
+                "finish_time": (
+                    record.finish_time.isoformat()
+                    if hasattr(record, "finish_time") and record.finish_time
+                    else None
+                ),
+                "error_count": getattr(record, "error_count", 0),
+                "warning_count": getattr(record, "warning_count", 0),
+                "issues": self._extract_issues(record),
+                "log_content": None,
+                "tasks": [],
             }
 
             # Get log content if available
-            if hasattr(record, 'log') and record.log and hasattr(record.log, 'id'):
+            if hasattr(record, "log") and record.log and hasattr(record.log, "id"):
                 log_content = self.get_build_log_content(build_id, record.log.id)
                 if log_content:
-                    job_info['log_content'] = log_content
+                    job_info["log_content"] = log_content
 
             # Find and add child tasks
             for child in timeline.records:
                 if child.parent_id == record.id:
                     task_info = {
-                        'id': child.id,
-                        'name': child.name,
-                        'type': child.type,
-                        'state': child.state,
-                        'result': getattr(child, 'result', None),
-                        'start_time': child.start_time.isoformat() if hasattr(child, 'start_time') and child.start_time else None,
-                        'finish_time': child.finish_time.isoformat() if hasattr(child, 'finish_time') and child.finish_time else None,
-                        'error_count': getattr(child, 'error_count', 0),
-                        'warning_count': getattr(child, 'warning_count', 0),
-                        'issues': self._extract_issues(child),
-                        'log_content': None
+                        "id": child.id,
+                        "name": child.name,
+                        "type": child.type,
+                        "state": child.state,
+                        "result": getattr(child, "result", None),
+                        "start_time": (
+                            child.start_time.isoformat()
+                            if hasattr(child, "start_time") and child.start_time
+                            else None
+                        ),
+                        "finish_time": (
+                            child.finish_time.isoformat()
+                            if hasattr(child, "finish_time") and child.finish_time
+                            else None
+                        ),
+                        "error_count": getattr(child, "error_count", 0),
+                        "warning_count": getattr(child, "warning_count", 0),
+                        "issues": self._extract_issues(child),
+                        "log_content": None,
                     }
 
                     # Collect issues from grandchildren (e.g., Job records under Phase records)
                     for grandchild in timeline.records:
                         if grandchild.parent_id == child.id:
                             grandchild_issues = self._extract_issues(grandchild)
-                            task_info['issues'].extend(grandchild_issues)
+                            task_info["issues"].extend(grandchild_issues)
 
                     # Get task log content
-                    if hasattr(child, 'log') and child.log and hasattr(child.log, 'id'):
+                    if hasattr(child, "log") and child.log and hasattr(child.log, "id"):
                         task_log = self.get_build_log_content(build_id, child.log.id)
                         if task_log:
-                            task_info['log_content'] = task_log
+                            task_info["log_content"] = task_log
 
-                    job_info['tasks'].append(task_info)
+                    job_info["tasks"].append(task_info)
 
-            result['jobs'].append(job_info)
+            result["jobs"].append(job_info)
 
         return result
 
@@ -448,11 +465,11 @@ class AzureClient:
             List of issue dicts with 'message' and 'type' keys
         """
         issues = []
-        if hasattr(record, 'issues') and record.issues:
+        if hasattr(record, "issues") and record.issues:
             for issue in record.issues:
                 issue_dict = {
-                    'message': getattr(issue, 'message', str(issue)),
-                    'type': getattr(issue, 'type', 'unknown')
+                    "message": getattr(issue, "message", str(issue)),
+                    "type": getattr(issue, "type", "unknown"),
                 }
                 issues.append(issue_dict)
         return issues

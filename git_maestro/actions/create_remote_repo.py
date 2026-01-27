@@ -214,7 +214,7 @@ class CreateRemoteRepoAction(Action):
                     console.print("[yellow]Cancelled, using Public[/yellow]")
                     is_private = False
                 else:
-                    is_private = (visibility_choice == 2)
+                    is_private = visibility_choice == 2
 
                 # Create GitHub repository
                 console.print(

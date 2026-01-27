@@ -107,7 +107,7 @@ class FetchGitlabPipelinesAction(Action):
                 console.print(
                     "Please set your GitLab token in ~/.config/git-maestro/tokens.conf"
                 )
-                console.print('Add a line: gitlab=YOUR_TOKEN')
+                console.print("Add a line: gitlab=YOUR_TOKEN")
                 return False
 
             # Connect to GitLab
@@ -120,9 +120,7 @@ class FetchGitlabPipelinesAction(Action):
             pipelines = client.get_pipelines(per_page=10)
 
             if not pipelines:
-                console.print(
-                    "[bold yellow]No pipelines found[/bold yellow]"
-                )
+                console.print("[bold yellow]No pipelines found[/bold yellow]")
                 # Store facts even if no pipelines
                 state.set_facts(
                     {
@@ -250,7 +248,7 @@ class FetchGitlabPipelinesAction(Action):
                             console.print(f"\n[bold]{job.name}[/bold]")
                             console.print(f"  Stage: {job.stage}")
                             console.print(f"  URL: {job.web_url}")
-                            if hasattr(job, 'failure_reason') and job.failure_reason:
+                            if hasattr(job, "failure_reason") and job.failure_reason:
                                 console.print(f"  Failure: {job.failure_reason}")
 
             except Exception as e:
@@ -264,9 +262,7 @@ class FetchGitlabPipelinesAction(Action):
             return True
 
         except ImportError:
-            console.print(
-                "[bold red]✗ python-gitlab is not installed[/bold red]"
-            )
+            console.print("[bold red]✗ python-gitlab is not installed[/bold red]")
             console.print("Install it with: pip install python-gitlab")
             return False
         except ValueError as e:

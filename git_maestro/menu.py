@@ -131,7 +131,9 @@ class Menu:
         self.applicable_actions = ordered_actions
 
         console.print("\n[bold cyan]Available Actions[/bold cyan]")
-        console.print("[dim]Use arrow keys to pick next action. Press 's' to show the repository state. Esc exits.[/dim]\n")
+        console.print(
+            "[dim]Use arrow keys to pick next action. Press 's' to show the repository state. Esc exits.[/dim]\n"
+        )
 
         show_state_choice = Choice(
             title="👀 Show repository state (press s)",
@@ -140,7 +142,9 @@ class Menu:
         )
         extra_choices = [show_state_choice]
 
-        instruction = "Press enter to confirm, 's' to show the repository state, or esc to cancel"
+        instruction = (
+            "Press enter to confirm, 's' to show the repository state, or esc to cancel"
+        )
 
         while True:
             try:

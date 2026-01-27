@@ -28,28 +28,28 @@ def parse_gitlab_url(url: str) -> Optional[Dict[str, str]]:
         return None
 
     # Handle SSH format: git@gitlab.com:group/project.git
-    ssh_match = re.match(r'^git@([^:]+):(.+?)(?:\.git)?$', url)
+    ssh_match = re.match(r"^git@([^:]+):(.+?)(?:\.git)?$", url)
     if ssh_match:
         host = ssh_match.group(1)
         project_path = ssh_match.group(2)
         return {
-            'host': host,
-            'project_path': project_path,
-            'project_path_encoded': project_path.replace('/', '%2F')
+            "host": host,
+            "project_path": project_path,
+            "project_path_encoded": project_path.replace("/", "%2F"),
         }
 
     # Handle HTTPS format
     parsed = urlparse(url)
-    if parsed.scheme in ('http', 'https') and parsed.netloc:
+    if parsed.scheme in ("http", "https") and parsed.netloc:
         # Remove leading slash and .git suffix
-        project_path = parsed.path.lstrip('/').rstrip('/')
-        if project_path.endswith('.git'):
+        project_path = parsed.path.lstrip("/").rstrip("/")
+        if project_path.endswith(".git"):
             project_path = project_path[:-4]
 
         return {
-            'host': parsed.netloc,
-            'project_path': project_path,
-            'project_path_encoded': project_path.replace('/', '%2F')
+            "host": parsed.netloc,
+            "project_path": project_path,
+            "project_path_encoded": project_path.replace("/", "%2F"),
         }
 
     return None
@@ -75,9 +75,9 @@ class GitLabClient:
         if not parsed:
             raise ValueError(f"Invalid GitLab URL: {url}")
 
-        self.host = parsed['host']
-        self.project_path = parsed['project_path']
-        self.project_path_encoded = parsed['project_path_encoded']
+        self.host = parsed["host"]
+        self.project_path = parsed["project_path"]
+        self.project_path_encoded = parsed["project_path_encoded"]
 
         # Initialize GitLab client
         gitlab_url = f"https://{self.host}"
@@ -87,7 +87,9 @@ class GitLabClient:
         try:
             self.project: Project = self.gl.projects.get(self.project_path_encoded)
         except Exception as e:
-            raise ValueError(f"Could not access GitLab project {self.project_path}: {e}")
+            raise ValueError(
+                f"Could not access GitLab project {self.project_path}: {e}"
+            )
 
     def get_pipelines(self, per_page: int = 10) -> List[ProjectPipeline]:
         """
@@ -150,13 +152,13 @@ class GitLabClient:
         """
         job = self.get_job(job_id)
         try:
-            return job.trace().decode('utf-8')
+            return job.trace().decode("utf-8")
         except Exception:
             # If decode fails, try returning as-is or empty string
             try:
                 trace = job.trace()
                 if isinstance(trace, bytes):
-                    return trace.decode('utf-8', errors='replace')
+                    return trace.decode("utf-8", errors="replace")
                 return str(trace) if trace else ""
             except Exception:
                 return ""
@@ -177,12 +179,12 @@ class GitLabClient:
         """
         pipeline = self.get_pipeline(pipeline_id)
         return {
-            'status': pipeline.status,
-            'created_at': pipeline.created_at,
-            'updated_at': pipeline.updated_at,
-            'web_url': pipeline.web_url,
-            'ref': pipeline.ref,
-            'sha': pipeline.sha,
+            "status": pipeline.status,
+            "created_at": pipeline.created_at,
+            "updated_at": pipeline.updated_at,
+            "web_url": pipeline.web_url,
+            "ref": pipeline.ref,
+            "sha": pipeline.sha,
         }
 
     def get_job_status(self, job_id: int) -> Dict[str, Any]:
@@ -197,14 +199,14 @@ class GitLabClient:
         """
         job = self.get_job(job_id)
         return {
-            'status': job.status,
-            'stage': job.stage,
-            'name': job.name,
-            'created_at': job.created_at,
-            'started_at': getattr(job, 'started_at', None),
-            'finished_at': getattr(job, 'finished_at', None),
-            'web_url': job.web_url,
-            'failure_reason': getattr(job, 'failure_reason', None),
+            "status": job.status,
+            "stage": job.stage,
+            "name": job.name,
+            "created_at": job.created_at,
+            "started_at": getattr(job, "started_at", None),
+            "finished_at": getattr(job, "finished_at", None),
+            "web_url": job.web_url,
+            "failure_reason": getattr(job, "failure_reason", None),
         }
 
     def download_job_log(self, job_id: int, output_path: Path) -> bool:
@@ -221,7 +223,7 @@ class GitLabClient:
         try:
             trace = self.get_job_trace(job_id)
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            output_path.write_text(trace, encoding='utf-8')
+            output_path.write_text(trace, encoding="utf-8")
             return True
         except Exception:
             return False
@@ -240,14 +242,16 @@ class GitLabClient:
         failed_jobs = []
 
         for job in jobs:
-            if job.status == 'failed':
-                failed_jobs.append({
-                    'id': job.id,
-                    'name': job.name,
-                    'stage': job.stage,
-                    'status': job.status,
-                    'web_url': job.web_url,
-                    'failure_reason': getattr(job, 'failure_reason', None),
-                })
+            if job.status == "failed":
+                failed_jobs.append(
+                    {
+                        "id": job.id,
+                        "name": job.name,
+                        "stage": job.stage,
+                        "status": job.status,
+                        "web_url": job.web_url,
+                        "failure_reason": getattr(job, "failure_reason", None),
+                    }
+                )
 
         return failed_jobs

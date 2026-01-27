@@ -227,6 +227,7 @@ class SetupRemoteAction(Action):
             # Handle Azure DevOps
             elif provider_choice == 3:
                 from .setup_azure_devops import SetupAzureDevOpsAction
+
                 azure_action = SetupAzureDevOpsAction()
                 return azure_action.execute(state)
 
@@ -290,7 +291,9 @@ class SetupRemoteAction(Action):
 
             # Get repository details
             console.print("\n[yellow]Enter the repository name:[/yellow]")
-            repo_name = prompt_text("Repository:", default=state.path.name) or state.path.name
+            repo_name = (
+                prompt_text("Repository:", default=state.path.name) or state.path.name
+            )
 
             # Get description with smart suggestions
             description = self._get_description(state, repo_name)
@@ -309,7 +312,7 @@ class SetupRemoteAction(Action):
                 console.print("[yellow]Cancelled, using Public[/yellow]")
                 is_private = False
             else:
-                is_private = (visibility_choice == 2)
+                is_private = visibility_choice == 2
 
             # Create repository
             console.print(f"\n[cyan]Creating GitHub repository '{repo_name}'...[/cyan]")
@@ -398,7 +401,9 @@ class SetupRemoteAction(Action):
 
             # Get repository details
             console.print("\n[yellow]Enter the repository name:[/yellow]")
-            repo_name = prompt_text("Repository:", default=state.path.name) or state.path.name
+            repo_name = (
+                prompt_text("Repository:", default=state.path.name) or state.path.name
+            )
 
             # Get description with smart suggestions
             description = self._get_description(state, repo_name)

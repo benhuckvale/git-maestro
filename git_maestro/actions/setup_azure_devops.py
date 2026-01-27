@@ -112,7 +112,9 @@ class SetupAzureDevOpsAction(Action):
             "  [dim]4.[/dim] Select scope: [bold]Code (read & write)[/bold] and [bold]Project & Team (read)[/bold]"
         )
         console.print("  [dim]5.[/dim] Click 'Create'")
-        console.print("  [dim]6.[/dim] Copy the token immediately (it won't be shown again)")
+        console.print(
+            "  [dim]6.[/dim] Copy the token immediately (it won't be shown again)"
+        )
 
         console.print()
         token = prompt_password("Enter PAT:")
@@ -176,14 +178,20 @@ class SetupAzureDevOpsAction(Action):
     def execute(self, state: RepoState) -> bool:
         """Set up an Azure DevOps remote repository."""
         try:
-            console.print("[bold cyan]Setting up Azure DevOps remote repository...[/bold cyan]")
+            console.print(
+                "[bold cyan]Setting up Azure DevOps remote repository...[/bold cyan]"
+            )
 
             # Get token
             token = self._get_token()
 
             # Get organization
-            console.print("\n[yellow]Enter your Azure DevOps organization name:[/yellow]")
-            console.print("[dim]Example: if your URL is https://dev.azure.com/mycompany, enter 'mycompany'[/dim]")
+            console.print(
+                "\n[yellow]Enter your Azure DevOps organization name:[/yellow]"
+            )
+            console.print(
+                "[dim]Example: if your URL is https://dev.azure.com/mycompany, enter 'mycompany'[/dim]"
+            )
             organization = prompt_text("Organization:", default="")
 
             if not organization:
@@ -192,7 +200,9 @@ class SetupAzureDevOpsAction(Action):
 
             # Get project name
             console.print("\n[yellow]Enter your Azure DevOps project name:[/yellow]")
-            project = prompt_text("Project:", default=state.path.name) or state.path.name
+            project = (
+                prompt_text("Project:", default=state.path.name) or state.path.name
+            )
 
             if not project:
                 console.print("[bold red]✗ Project name is required[/bold red]")
@@ -205,13 +215,9 @@ class SetupAzureDevOpsAction(Action):
                 console.print(
                     f"[green]✓ SSH key found: {ssh_config.github_key}[/green]"
                 )
-                console.print(
-                    "[dim]This SSH key can be used with Azure DevOps[/dim]"
-                )
+                console.print("[dim]This SSH key can be used with Azure DevOps[/dim]")
             else:
-                console.print(
-                    "[yellow]⚠ No SSH key detected in ~/.ssh/[/yellow]"
-                )
+                console.print("[yellow]⚠ No SSH key detected in ~/.ssh/[/yellow]")
                 console.print(
                     "[dim]You may want to set up SSH keys for easier authentication[/dim]"
                 )
@@ -221,7 +227,9 @@ class SetupAzureDevOpsAction(Action):
 
             # Get repository details
             console.print("\n[yellow]Enter the repository name:[/yellow]")
-            repo_name = prompt_text("Repository:", default=state.path.name) or state.path.name
+            repo_name = (
+                prompt_text("Repository:", default=state.path.name) or state.path.name
+            )
 
             if not repo_name:
                 console.print("[bold red]✗ Repository name is required[/bold red]")
@@ -240,12 +248,16 @@ class SetupAzureDevOpsAction(Action):
                 # We're really just testing the authentication here
                 console.print("[green]✓ Authenticated with Azure DevOps[/green]")
             except Exception as e:
-                console.print(f"[bold red]✗ Azure DevOps authentication failed: {e}[/bold red]")
+                console.print(
+                    f"[bold red]✗ Azure DevOps authentication failed: {e}[/bold red]"
+                )
                 return False
 
             # Build SSH remote URL
             # Format: git@ssh.dev.azure.com:v3/{org}/{project}/{repo}
-            remote_url = f"git@ssh.dev.azure.com:v3/{organization}/{project}/{repo_name}"
+            remote_url = (
+                f"git@ssh.dev.azure.com:v3/{organization}/{project}/{repo_name}"
+            )
 
             console.print("\n[cyan]Adding remote...[/cyan]")
             try:
@@ -266,7 +278,9 @@ class SetupAzureDevOpsAction(Action):
             console.print(
                 f"[dim]  https://dev.azure.com/{organization}/{project}/_git[/dim]"
             )
-            console.print("[dim]  Then push your code with: git push -u origin main[/dim]")
+            console.print(
+                "[dim]  Then push your code with: git push -u origin main[/dim]"
+            )
 
             # Push if there are commits
             if state.has_commits:

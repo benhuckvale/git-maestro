@@ -118,7 +118,9 @@ class FetchAzurePipelinesAction(Action):
             # Get token
             token = self._get_stored_token()
             if not token:
-                console.print("[bold yellow]⚠ No Azure DevOps token found[/bold yellow]")
+                console.print(
+                    "[bold yellow]⚠ No Azure DevOps token found[/bold yellow]"
+                )
                 console.print("You need an Azure DevOps PAT to fetch pipeline results.")
                 console.print(
                     "Please run 'Setup Azure DevOps Repository' first to configure your token."
@@ -135,7 +137,9 @@ class FetchAzurePipelinesAction(Action):
             pipelines = client.get_pipelines()
 
             if not pipelines:
-                console.print("[bold yellow]No pipelines found in project[/bold yellow]")
+                console.print(
+                    "[bold yellow]No pipelines found in project[/bold yellow]"
+                )
                 state.set_facts(
                     {
                         "azure_pipelines_checked": True,

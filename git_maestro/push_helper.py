@@ -35,7 +35,9 @@ def push_to_remote(state: RepoState, origin) -> bool:
         # Detached HEAD or other edge case
         try:
             current_branch = state.repo.head.commit.hexsha[:7]
-            console.print(f"[dim]Current commit (detached HEAD): {current_branch}[/dim]")
+            console.print(
+                f"[dim]Current commit (detached HEAD): {current_branch}[/dim]"
+            )
         except Exception:
             current_branch = "unknown"
             console.print("[dim]Current branch: unknown[/dim]")
@@ -44,7 +46,9 @@ def push_to_remote(state: RepoState, origin) -> bool:
     try:
         commits = list(state.repo.iter_commits(max_count=5))
         if commits:
-            console.print(f"[dim]Recent commits: {len(commits)} shown (may be more)[/dim]")
+            console.print(
+                f"[dim]Recent commits: {len(commits)} shown (may be more)[/dim]"
+            )
     except Exception:
         pass
 
@@ -101,7 +105,9 @@ def _push_current_branch(state: RepoState, origin, branch: str) -> bool:
         return True
     except Exception as push_error:
         console.print(f"[bold red]✗ Push failed: {push_error}[/bold red]")
-        console.print(f"[yellow]You can push manually with: git push -u origin {branch}[/yellow]")
+        console.print(
+            f"[yellow]You can push manually with: git push -u origin {branch}[/yellow]"
+        )
         return False
 
 
@@ -162,7 +168,9 @@ def _push_specific_branch(state: RepoState, origin) -> bool:
         # Push
         console.print(f"[cyan]Pushing {selected_branch} to remote...[/cyan]")
         if set_upstream:
-            origin.push(refspec=f"{selected_branch}:{selected_branch}", set_upstream=True)
+            origin.push(
+                refspec=f"{selected_branch}:{selected_branch}", set_upstream=True
+            )
         else:
             origin.push(refspec=f"{selected_branch}:{selected_branch}")
 
@@ -195,10 +203,13 @@ def _push_specific_commit(state: RepoState, origin) -> bool:
 
     # Ask which branch to view commits from
     console.print("\n[yellow]Which branch's commits would you like to view?[/yellow]")
-    branch_to_view = prompt_text(
-        f"Branch name (default: {current_branch}):",
-        default=current_branch,
-    ) or current_branch
+    branch_to_view = (
+        prompt_text(
+            f"Branch name (default: {current_branch}):",
+            default=current_branch,
+        )
+        or current_branch
+    )
 
     # Show commits on that branch
     console.print(f"\n[cyan]Recent commits on {branch_to_view}:[/cyan]")
@@ -213,10 +224,10 @@ def _push_specific_commit(state: RepoState, origin) -> bool:
         # Display commits with numbers
         for i, commit in enumerate(commits, 1):
             short_sha = commit.hexsha[:7]
-            message = commit.message.split('\n')[0][:60]
+            message = commit.message.split("\n")[0][:60]
             author = commit.author.name
             # Format date
-            commit_date = commit.committed_datetime.strftime('%Y-%m-%d')
+            commit_date = commit.committed_datetime.strftime("%Y-%m-%d")
             console.print(f"  {i}. [dim]{short_sha}[/dim] {message}")
             console.print(f"      [dim]{author} - {commit_date}[/dim]")
 
@@ -228,7 +239,9 @@ def _push_specific_commit(state: RepoState, origin) -> bool:
 
     # Get commit selection
     console.print("\n[yellow]Select a commit to push (by number or SHA):[/yellow]")
-    console.print("[dim]The branch will be pushed up to this commit (creating partial history on remote)[/dim]")
+    console.print(
+        "[dim]The branch will be pushed up to this commit (creating partial history on remote)[/dim]"
+    )
     selection = prompt_text("Commit (number or SHA):", default="")
 
     if not selection:
@@ -250,8 +263,12 @@ def _push_specific_commit(state: RepoState, origin) -> bool:
         commit_sha = selection
 
     # Get target branch name for the push
-    console.print("\n[yellow]Which remote branch should this commit be pushed to?[/yellow]")
-    target_branch = prompt_text("Target branch:", default=branch_to_view) or branch_to_view
+    console.print(
+        "\n[yellow]Which remote branch should this commit be pushed to?[/yellow]"
+    )
+    target_branch = (
+        prompt_text("Target branch:", default=branch_to_view) or branch_to_view
+    )
 
     # Ask about set-upstream
     set_upstream_choice = select_number_from_menu(
@@ -269,22 +286,32 @@ def _push_specific_commit(state: RepoState, origin) -> bool:
 
     try:
         # Push specific commit to branch
-        console.print(f"[cyan]Pushing commit {commit_sha[:7]} to {target_branch}...[/cyan]")
+        console.print(
+            f"[cyan]Pushing commit {commit_sha[:7]} to {target_branch}...[/cyan]"
+        )
 
         if set_upstream:
-            origin.push(refspec=f"{commit_sha}:refs/heads/{target_branch}", set_upstream=True)
+            origin.push(
+                refspec=f"{commit_sha}:refs/heads/{target_branch}", set_upstream=True
+            )
         else:
             origin.push(refspec=f"{commit_sha}:refs/heads/{target_branch}")
 
-        console.print("[bold green]✓ Pushed commit to remote successfully![/bold green]")
+        console.print(
+            "[bold green]✓ Pushed commit to remote successfully![/bold green]"
+        )
 
         if not set_upstream:
             console.print("[yellow]Note: To set upstream tracking, run:[/yellow]")
-            console.print(f"[dim]  git branch --set-upstream-to=origin/{target_branch}[/dim]")
+            console.print(
+                f"[dim]  git branch --set-upstream-to=origin/{target_branch}[/dim]"
+            )
 
         return True
     except Exception as push_error:
         console.print(f"[bold red]✗ Push failed: {push_error}[/bold red]")
         console.print("[yellow]You can push manually with:[/yellow]")
-        console.print(f"[dim]  git push origin {commit_sha}:refs/heads/{target_branch}[/dim]")
+        console.print(
+            f"[dim]  git push origin {commit_sha}:refs/heads/{target_branch}[/dim]"
+        )
         return False

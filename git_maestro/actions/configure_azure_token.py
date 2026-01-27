@@ -70,9 +70,7 @@ class ConfigureAzureTokenAction(Action):
     def execute(self, state: RepoState) -> bool:
         """Configure Azure DevOps token."""
         try:
-            console.print(
-                "[bold cyan]Configuring Azure DevOps access...[/bold cyan]"
-            )
+            console.print("[bold cyan]Configuring Azure DevOps access...[/bold cyan]")
 
             # Parse Azure URL to show org/project
             parsed = parse_azure_url(state.remote_url)
@@ -90,7 +88,9 @@ class ConfigureAzureTokenAction(Action):
                 "[yellow]This is different from your SSH key (used for git push/pull).[/yellow]\n"
             )
 
-            console.print("[cyan]To create an Azure DevOps Personal Access Token:[/cyan]")
+            console.print(
+                "[cyan]To create an Azure DevOps Personal Access Token:[/cyan]"
+            )
             console.print(
                 "  [dim]1.[/dim] Go to [blue]https://dev.azure.com/{organization}/_usersSettings/tokens[/blue]"
             )
@@ -100,7 +100,9 @@ class ConfigureAzureTokenAction(Action):
                 "  [dim]4.[/dim] Select scope: [bold]Code (read)[/bold] is sufficient for monitoring pipelines"
             )
             console.print("  [dim]5.[/dim] Click 'Create'")
-            console.print("  [dim]6.[/dim] Copy the token immediately (it won't be shown again)")
+            console.print(
+                "  [dim]6.[/dim] Copy the token immediately (it won't be shown again)"
+            )
 
             console.print()
             token = prompt_password("Enter PAT:")

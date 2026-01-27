@@ -56,7 +56,9 @@ class DownloadAzureStageLogsAction(Action):
             pipeline_id = state.get_fact("azure_pipelines_pipeline_id")
 
             if not run_id or not pipeline_id:
-                console.print("[bold red]✗ Could not retrieve run/pipeline ID[/bold red]")
+                console.print(
+                    "[bold red]✗ Could not retrieve run/pipeline ID[/bold red]"
+                )
                 return False
 
             # Get token
@@ -94,38 +96,45 @@ class DownloadAzureStageLogsAction(Action):
                 console=console,
             ) as progress:
                 progress.add_task(description="", total=None)
-                complete_logs = azure_client.get_complete_execution_logs(build_id=run_id)
+                complete_logs = azure_client.get_complete_execution_logs(
+                    build_id=run_id
+                )
 
-            if not complete_logs or not complete_logs.get('jobs'):
+            if not complete_logs or not complete_logs.get("jobs"):
                 console.print("[yellow]No jobs found in run[/yellow]")
                 return False
 
             downloaded_count = 0
 
             # Download logs for each job and task
-            console.print(f"[cyan]Downloading logs from {len(complete_logs['jobs'])} job(s)...[/cyan]\n")
+            console.print(
+                f"[cyan]Downloading logs from {len(complete_logs['jobs'])} job(s)...[/cyan]\n"
+            )
 
-            for job in complete_logs['jobs']:
-                job_name = job['name']
+            for job in complete_logs["jobs"]:
+                job_name = job["name"]
                 console.print(f"[cyan]Job: {job_name}[/cyan]")
 
                 # Display and save diagnostic issues if present
-                if job.get('issues'):
+                if job.get("issues"):
                     console.print("[bold red]  Diagnostic Issues:[/bold red]")
 
                     # Build issues content
                     issues_content = []
-                    for issue in job['issues']:
-                        issue_type = issue.get('type', 'error').upper()
-                        message = issue.get('message', 'Unknown error')
+                    for issue in job["issues"]:
+                        issue_type = issue.get("type", "error").upper()
+                        message = issue.get("message", "Unknown error")
                         console.print(f"  [{issue_type}] {message}")
                         issues_content.append(f"[{issue_type}] {message}")
 
                     # Save issues to file
                     try:
-                        issues_file = run_dir / f"job-{job['id']}-{job_name.replace(' ', '_')}.issues"
+                        issues_file = (
+                            run_dir
+                            / f"job-{job['id']}-{job_name.replace(' ', '_')}.issues"
+                        )
                         with open(issues_file, "w") as f:
-                            f.write('\n'.join(issues_content))
+                            f.write("\n".join(issues_content))
                         console.print("  [green]✓ Saved diagnostic issues[/green]")
                         downloaded_count += 1
                     except Exception as e:
@@ -134,54 +143,75 @@ class DownloadAzureStageLogsAction(Action):
                     console.print()
 
                 # Save job-level log if available
-                if job.get('log_content'):
+                if job.get("log_content"):
                     try:
-                        job_log_file = run_dir / f"job-{job['id']}-{job_name.replace(' ', '_')}.log"
+                        job_log_file = (
+                            run_dir
+                            / f"job-{job['id']}-{job_name.replace(' ', '_')}.log"
+                        )
                         with open(job_log_file, "w") as f:
-                            f.write(job['log_content'])
+                            f.write(job["log_content"])
                         console.print("  [green]✓ Downloaded job log[/green]")
                         downloaded_count += 1
                     except Exception as e:
                         console.print(f"  [yellow]⚠ Error saving job log: {e}[/yellow]")
 
                 # Save logs for each task
-                for task in job.get('tasks', []):
-                    task_name = task['name']
+                for task in job.get("tasks", []):
+                    task_name = task["name"]
 
                     # Display and save task diagnostic issues if present
-                    if task.get('issues'):
+                    if task.get("issues"):
                         console.print(f"  [yellow]⚠ {task_name} has issues:[/yellow]")
 
                         # Build and save issues content
                         task_issues_content = []
-                        for issue in task['issues']:
-                            issue_type = issue.get('type', 'warning').upper()
-                            message = issue.get('message', 'Unknown issue')
+                        for issue in task["issues"]:
+                            issue_type = issue.get("type", "warning").upper()
+                            message = issue.get("message", "Unknown issue")
                             console.print(f"    [{issue_type}] {message}")
                             task_issues_content.append(f"[{issue_type}] {message}")
 
                         # Save task issues to file
                         try:
-                            task_issues_file = run_dir / f"task-{task['id']}-{task_name.replace(' ', '_')}.issues"
+                            task_issues_file = (
+                                run_dir
+                                / f"task-{task['id']}-{task_name.replace(' ', '_')}.issues"
+                            )
                             with open(task_issues_file, "w") as f:
-                                f.write('\n'.join(task_issues_content))
+                                f.write("\n".join(task_issues_content))
                             downloaded_count += 1
                         except Exception as e:
-                            console.print(f"    [yellow]⚠ Error saving task issues: {e}[/yellow]")
+                            console.print(
+                                f"    [yellow]⚠ Error saving task issues: {e}[/yellow]"
+                            )
 
-                    if task.get('log_content'):
+                    if task.get("log_content"):
                         try:
-                            task_result = task['result'] or 'unknown'
-                            task_log_file = run_dir / f"task-{task['id']}-{task_name.replace(' ', '_')}.log"
+                            task_result = task["result"] or "unknown"
+                            task_log_file = (
+                                run_dir
+                                / f"task-{task['id']}-{task_name.replace(' ', '_')}.log"
+                            )
                             with open(task_log_file, "w") as f:
-                                f.write(task['log_content'])
-                            status_icon = "[green]✓[/green]" if task_result == 'succeeded' else "[red]✗[/red]"
-                            console.print(f"  {status_icon} Task: {task_name} ({task_result})")
+                                f.write(task["log_content"])
+                            status_icon = (
+                                "[green]✓[/green]"
+                                if task_result == "succeeded"
+                                else "[red]✗[/red]"
+                            )
+                            console.print(
+                                f"  {status_icon} Task: {task_name} ({task_result})"
+                            )
                             downloaded_count += 1
                         except Exception as e:
-                            console.print(f"  [yellow]⚠ Error saving task log: {e}[/yellow]")
+                            console.print(
+                                f"  [yellow]⚠ Error saving task log: {e}[/yellow]"
+                            )
                     else:
-                        console.print(f"  [yellow]⚠ No log content for task: {task_name}[/yellow]")
+                        console.print(
+                            f"  [yellow]⚠ No log content for task: {task_name}[/yellow]"
+                        )
 
             console.print(
                 f"\n[bold green]✓ Downloaded {downloaded_count} log file(s) to: {run_dir}[/bold green]"

@@ -45,20 +45,22 @@ def push_test_files_to_project(project, test_project_dir: Path):
     try:
         # Files to push
         files_to_push = [
-            ('.gitlab-ci.yml', test_project_dir / '.gitlab-ci.yml'),
-            ('src/hello.py', test_project_dir / 'src' / 'hello.py'),
-            ('tests/test_hello.py', test_project_dir / 'tests' / 'test_hello.py'),
+            (".gitlab-ci.yml", test_project_dir / ".gitlab-ci.yml"),
+            ("src/hello.py", test_project_dir / "src" / "hello.py"),
+            ("tests/test_hello.py", test_project_dir / "tests" / "test_hello.py"),
         ]
 
         actions = []
         for file_path, local_path in files_to_push:
             if local_path.exists():
                 content = local_path.read_text()
-                actions.append({
-                    'action': 'create',
-                    'file_path': file_path,
-                    'content': content,
-                })
+                actions.append(
+                    {
+                        "action": "create",
+                        "file_path": file_path,
+                        "content": content,
+                    }
+                )
                 print(f"  Adding: {file_path}")
             else:
                 print(f"  Warning: {local_path} not found, skipping")
@@ -68,11 +70,13 @@ def push_test_files_to_project(project, test_project_dir: Path):
             return False
 
         # Create a commit with all files
-        commit = project.commits.create({
-            'branch': 'main',
-            'commit_message': 'Add test files and CI/CD configuration',
-            'actions': actions
-        })
+        commit = project.commits.create(
+            {
+                "branch": "main",
+                "commit_message": "Add test files and CI/CD configuration",
+                "actions": actions,
+            }
+        )
 
         print(f"\n✓ Pushed {len(actions)} files in commit {commit.short_id}")
         print(f"  Commit URL: {commit.web_url}")
@@ -114,7 +118,11 @@ def create_test_project(token: str, namespace_path: str, project_name: str):
             except ValueError:
                 # Not numeric, try as path
                 groups = gl.groups.list(search=namespace_path)
-                matching_groups = [g for g in groups if g.path == namespace_path or g.full_path == namespace_path]
+                matching_groups = [
+                    g
+                    for g in groups
+                    if g.path == namespace_path or g.full_path == namespace_path
+                ]
                 if not matching_groups:
                     print(f"Error: Could not find namespace '{namespace_path}'")
                     print("\nAvailable namespaces you have access to:")
@@ -162,19 +170,19 @@ Examples:
 
   # Use token from config file
   python integration-tests/test_gitlab_live.py --project-url https://gitlab.com/mygroup/myproject
-        """
+        """,
     )
 
     parser.add_argument(
         "--token",
         help="GitLab personal access token (if not provided, reads from ~/.config/git-maestro/tokens.conf)",
-        default=None
+        default=None,
     )
 
     parser.add_argument(
         "--project-url",
         required=True,
-        help="GitLab project URL (e.g., https://gitlab.com/group/project)"
+        help="GitLab project URL (e.g., https://gitlab.com/group/project)",
     )
 
     args = parser.parse_args()
@@ -191,7 +199,9 @@ Examples:
                     for line in f:
                         if line.startswith("gitlab="):
                             token = line.split("=", 1)[1].strip()
-                            print("Using token from config file: ~/.config/git-maestro/tokens.conf\n")
+                            print(
+                                "Using token from config file: ~/.config/git-maestro/tokens.conf\n"
+                            )
                             break
             except Exception as e:
                 print(f"Warning: Could not read config file: {e}")
@@ -211,12 +221,14 @@ Examples:
         sys.exit(1)
 
     # Extract namespace and project name, add timestamp
-    project_path_parts = parsed['project_path'].split('/')
+    project_path_parts = parsed["project_path"].split("/")
     if len(project_path_parts) < 2:
-        print(f"Error: Invalid project path format. Expected 'namespace/project', got: {parsed['project_path']}")
+        print(
+            f"Error: Invalid project path format. Expected 'namespace/project', got: {parsed['project_path']}"
+        )
         sys.exit(1)
 
-    namespace_path = '/'.join(project_path_parts[:-1])
+    namespace_path = "/".join(project_path_parts[:-1])
     base_project_name = project_path_parts[-1]
 
     # Add timestamp to make it unique
@@ -224,7 +236,9 @@ Examples:
     unique_project_name = f"{base_project_name}-{timestamp}"
 
     # Construct new URL with unique project name
-    unique_project_url = f"https://{parsed['host']}/{namespace_path}/{unique_project_name}"
+    unique_project_url = (
+        f"https://{parsed['host']}/{namespace_path}/{unique_project_name}"
+    )
 
     print("Testing GitLab integration")
     print(f"  Namespace: {namespace_path}")
@@ -265,7 +279,9 @@ Examples:
             print("")
 
             # Create the project
-            created_url, gl_conn, created_project = create_test_project(token, namespace_path, unique_project_name)
+            created_url, gl_conn, created_project = create_test_project(
+                token, namespace_path, unique_project_name
+            )
             if not created_url:
                 print("✗ Failed to create project")
                 sys.exit(1)
@@ -274,19 +290,26 @@ Examples:
 
             # Push test-project files to trigger pipelines
             script_dir = Path(__file__).parent
-            test_project_dir = script_dir.parent / 'test-project'
+            test_project_dir = script_dir.parent / "test-project"
 
             if test_project_dir.exists():
-                push_success = push_test_files_to_project(created_project, test_project_dir)
+                push_success = push_test_files_to_project(
+                    created_project, test_project_dir
+                )
                 if push_success:
                     # Wait for pipeline to start
                     import time
+
                     print("\nWaiting for pipeline to start...")
                     time.sleep(10)  # Give GitLab time to trigger the pipeline
                 else:
-                    print("\n[Warning] Could not push test files, pipeline tests may fail")
+                    print(
+                        "\n[Warning] Could not push test files, pipeline tests may fail"
+                    )
             else:
-                print(f"\n[Warning] test-project directory not found at {test_project_dir}")
+                print(
+                    f"\n[Warning] test-project directory not found at {test_project_dir}"
+                )
                 print("Pipeline tests will not have any pipelines to test against.")
 
             # Use the created project object directly with GitLabClient
@@ -296,9 +319,9 @@ Examples:
             try:
                 # Initialize the client with the created project
                 client = GitLabClient.__new__(GitLabClient)
-                client.host = parsed_unique['host']
-                client.project_path = parsed_unique['project_path']
-                client.project_path_encoded = parsed_unique['project_path_encoded']
+                client.host = parsed_unique["host"]
+                client.project_path = parsed_unique["project_path"]
+                client.project_path_encoded = parsed_unique["project_path_encoded"]
                 client.gl = gl_conn
                 client.project = created_project
 
@@ -334,17 +357,21 @@ Examples:
                 print(f"    SHA: {pipeline.sha[:8]}")
                 print(f"    Created: {pipeline.created_at}")
                 # Duration may not be available from list(), only from get()
-                if hasattr(pipeline, 'duration') and pipeline.duration:
+                if hasattr(pipeline, "duration") and pipeline.duration:
                     print(f"    Duration: {pipeline.duration}s")
                 print(f"    URL: {pipeline.web_url}")
         else:
             print("  No pipelines found")
             if project_was_created:
                 print("\n  Note: Project was just created and CI/CD files were pushed.")
-                print("  The pipeline might still be starting, or there may have been an issue.")
+                print(
+                    "  The pipeline might still be starting, or there may have been an issue."
+                )
                 print("  Check the project URL to see if a pipeline appears:")
                 print(f"    {client.project.web_url}/-/pipelines")
-                print("\n  If you wait a bit and re-run this test, the pipeline should appear.")
+                print(
+                    "\n  If you wait a bit and re-run this test, the pipeline should appear."
+                )
             else:
                 print("\n  Note: No pipelines exist in this project.")
                 print("  Add a .gitlab-ci.yml file and push to trigger a pipeline.")
@@ -388,7 +415,7 @@ Examples:
                     if job.duration:
                         print(f"    Duration: {job.duration}s")
                     print(f"    URL: {job.web_url}")
-                    if hasattr(job, 'failure_reason') and job.failure_reason:
+                    if hasattr(job, "failure_reason") and job.failure_reason:
                         print(f"    Failure reason: {job.failure_reason}")
 
                 # Test 6: Download job log
@@ -409,7 +436,7 @@ Examples:
                         print(f"  Size: {log_size} bytes")
 
                         # Show first few lines
-                        with open(log_file, 'r') as f:
+                        with open(log_file, "r") as f:
                             lines = f.readlines()[:5]
                             if lines:
                                 print("\n  First few lines:")
@@ -430,7 +457,7 @@ Examples:
                     print(f"  Status: {status['status']}")
                     print(f"  Stage: {status['stage']}")
                     print(f"  Name: {status['name']}")
-                    if status.get('failure_reason'):
+                    if status.get("failure_reason"):
                         print(f"  Failure reason: {status['failure_reason']}")
                 except Exception as e:
                     print(f"✗ Error checking job status: {e}")
@@ -457,7 +484,7 @@ Examples:
                     print(f"    Stage: {job['stage']}")
                     print(f"    Status: {job['status']}")
                     print(f"    URL: {job['web_url']}")
-                    if job.get('failure_reason'):
+                    if job.get("failure_reason"):
                         print(f"    Failure reason: {job['failure_reason']}")
             else:
                 print("  No failed jobs (all jobs successful or none exist)")

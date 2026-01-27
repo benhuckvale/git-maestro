@@ -276,7 +276,12 @@ class TestAzureClientCompleteExecutionLogs:
         # Create mock timeline
         mock_timeline = Mock()
         mock_timeline.id = "timeline-123"
-        mock_timeline.records = [stage_record, checkpoint_record, phase_record, job_record]
+        mock_timeline.records = [
+            stage_record,
+            checkpoint_record,
+            phase_record,
+            job_record,
+        ]
 
         mock_get_timeline.return_value = mock_timeline
         mock_get_log.return_value = None  # No log content for this test

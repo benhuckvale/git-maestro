@@ -22,16 +22,17 @@ class GetAzurePipelinesAction(Action):
     def __init__(self):
         super().__init__()
         self.name = "View Azure Pipelines Run History and Logs"
-        self.description = "Browse and download logs from specific Azure DevOps Pipelines runs"
+        self.description = (
+            "Browse and download logs from specific Azure DevOps Pipelines runs"
+        )
         self.emoji = "☁️"
         self.category = "info"
         self.storage_dir = "traces"  # Will create .git-maestro/traces/
 
     def is_applicable(self, state: RepoState) -> bool:
         """Only show if we have an Azure remote with pipelines history."""
-        return (
-            state.has_fact("azure_pipelines_checked")
-            and state.get_fact("azure_pipelines_has_runs", False)
+        return state.has_fact("azure_pipelines_checked") and state.get_fact(
+            "azure_pipelines_has_runs", False
         )
 
     def _get_stored_token(self) -> Optional[str]:
@@ -71,7 +72,9 @@ class GetAzurePipelinesAction(Action):
             return False
         return len(runs) > 0
 
-    def list_recent_runs(self, state: RepoState, count: int = 10) -> Optional[list[dict[str, Any]]]:
+    def list_recent_runs(
+        self, state: RepoState, count: int = 10
+    ) -> Optional[list[dict[str, Any]]]:
         """List recent pipeline runs.
 
         Args:
@@ -131,7 +134,9 @@ class GetAzurePipelinesAction(Action):
 
                     for run in runs:
                         # Map Azure status to GitHub-like status
-                        status = run.state.lower() if hasattr(run, "state") else "unknown"
+                        status = (
+                            run.state.lower() if hasattr(run, "state") else "unknown"
+                        )
                         conclusion = (
                             run.result.lower() if hasattr(run, "result") else None
                         )
@@ -181,7 +186,9 @@ class GetAzurePipelinesAction(Action):
             console.print(f"[bold red]✗ Error: {e}[/bold red]")
             return None
 
-    def get_run_stages(self, state: RepoState, pipeline_id: int, run_id: int) -> Optional[list[dict[str, Any]]]:
+    def get_run_stages(
+        self, state: RepoState, pipeline_id: int, run_id: int
+    ) -> Optional[list[dict[str, Any]]]:
         """Get detailed stage/job/task information for a specific run.
 
         Uses the Build API timeline to get complete job and task structure,
@@ -217,39 +224,39 @@ class GetAzurePipelinesAction(Action):
                 progress.add_task(description="", total=None)
                 complete_logs = client.get_complete_execution_logs(build_id=run_id)
 
-            if not complete_logs or not complete_logs.get('jobs'):
+            if not complete_logs or not complete_logs.get("jobs"):
                 console.print(f"[yellow]No jobs found in run {run_id}[/yellow]")
                 return []
 
             # Convert to stage/job info
             stages_info = []
-            for job in complete_logs['jobs']:
+            for job in complete_logs["jobs"]:
                 job_info = {
-                    "stage_id": job['id'],
-                    "name": job['name'],
-                    "status": job['state'],
-                    "result": job['result'],
-                    "start_time": job['start_time'],
-                    "finish_time": job['finish_time'],
-                    "error_count": job['error_count'],
-                    "warning_count": job['warning_count'],
-                    "tasks": []
+                    "stage_id": job["id"],
+                    "name": job["name"],
+                    "status": job["state"],
+                    "result": job["result"],
+                    "start_time": job["start_time"],
+                    "finish_time": job["finish_time"],
+                    "error_count": job["error_count"],
+                    "warning_count": job["warning_count"],
+                    "tasks": [],
                 }
 
                 # Add task details
-                for task in job.get('tasks', []):
+                for task in job.get("tasks", []):
                     task_info = {
-                        "task_id": task['id'],
-                        "name": task['name'],
-                        "type": task['type'],
-                        "status": task['state'],
-                        "result": task['result'],
-                        "start_time": task['start_time'],
-                        "finish_time": task['finish_time'],
-                        "error_count": task['error_count'],
-                        "warning_count": task['warning_count'],
+                        "task_id": task["id"],
+                        "name": task["name"],
+                        "type": task["type"],
+                        "status": task["state"],
+                        "result": task["result"],
+                        "start_time": task["start_time"],
+                        "finish_time": task["finish_time"],
+                        "error_count": task["error_count"],
+                        "warning_count": task["warning_count"],
                     }
-                    job_info['tasks'].append(task_info)
+                    job_info["tasks"].append(task_info)
 
                 stages_info.append(job_info)
 
@@ -260,7 +267,11 @@ class GetAzurePipelinesAction(Action):
             return None
 
     def check_run_status(
-        self, state: RepoState, pipeline_id: int, run_id: int, stage_id: Optional[str] = None
+        self,
+        state: RepoState,
+        pipeline_id: int,
+        run_id: int,
+        stage_id: Optional[str] = None,
     ) -> Optional[dict[str, Any]]:
         """Check the status of a run or stage without downloading logs.
 
@@ -333,7 +344,11 @@ class GetAzurePipelinesAction(Action):
                     "status": status,
                     "result": result,
                     "created_date": created_str,
-                    "url": run._links.get("web", {}).get("href") if hasattr(run, "_links") else None,
+                    "url": (
+                        run._links.get("web", {}).get("href")
+                        if hasattr(run, "_links")
+                        else None
+                    ),
                 }
 
         except Exception:

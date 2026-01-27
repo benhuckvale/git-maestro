@@ -116,7 +116,9 @@ class InitialCommitAction(Action):
             elif branch_choice == 3:
                 branch_name = "develop"
             elif branch_choice == 4:
-                branch_name = prompt_text("Enter branch name:", default="main") or "main"
+                branch_name = (
+                    prompt_text("Enter branch name:", default="main") or "main"
+                )
             else:
                 branch_name = "main"
 

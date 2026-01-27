@@ -28,9 +28,8 @@ class GetGithubActionsLogsAction(Action):
 
     def is_applicable(self, state: RepoState) -> bool:
         """Only show if we have a GitHub remote with GitHub Actions history."""
-        return (
-            state.has_fact("github_actions_checked")
-            and state.get_fact("github_actions_has_runs", False)
+        return state.has_fact("github_actions_checked") and state.get_fact(
+            "github_actions_has_runs", False
         )
 
     def _get_stored_token(self) -> Optional[str]:
@@ -67,7 +66,9 @@ class GetGithubActionsLogsAction(Action):
             return False
         return len(runs) > 0
 
-    def list_recent_runs(self, state: RepoState, count: int = 10) -> Optional[list[dict[str, Any]]]:
+    def list_recent_runs(
+        self, state: RepoState, count: int = 10
+    ) -> Optional[list[dict[str, Any]]]:
         """List recent workflow runs.
 
         Args:
@@ -169,7 +170,9 @@ class GetGithubActionsLogsAction(Action):
         remaining_minutes = minutes % 60
         return f"{hours}h {remaining_minutes}m"
 
-    def get_run_jobs(self, state: RepoState, run_id: int) -> Optional[list[dict[str, Any]]]:
+    def get_run_jobs(
+        self, state: RepoState, run_id: int
+    ) -> Optional[list[dict[str, Any]]]:
         """Get detailed job information for a specific run.
 
         Args:
@@ -293,8 +296,12 @@ class GetGithubActionsLogsAction(Action):
                     "name": job.name,
                     "status": job.status,
                     "conclusion": job.conclusion,
-                    "started_at": job.started_at.isoformat() if job.started_at else None,
-                    "completed_at": job.completed_at.isoformat() if job.completed_at else None,
+                    "started_at": (
+                        job.started_at.isoformat() if job.started_at else None
+                    ),
+                    "completed_at": (
+                        job.completed_at.isoformat() if job.completed_at else None
+                    ),
                     "duration": duration_str,
                     "url": job.html_url,
                 }
@@ -310,8 +317,12 @@ class GetGithubActionsLogsAction(Action):
                     "run_id": run.id,
                     "status": run.status,
                     "conclusion": run.conclusion,
-                    "created_at": run.created_at.isoformat() if run.created_at else None,
-                    "updated_at": run.updated_at.isoformat() if run.updated_at else None,
+                    "created_at": (
+                        run.created_at.isoformat() if run.created_at else None
+                    ),
+                    "updated_at": (
+                        run.updated_at.isoformat() if run.updated_at else None
+                    ),
                     "duration": duration_str,
                     "url": run.html_url,
                 }
@@ -368,7 +379,9 @@ class GetGithubActionsLogsAction(Action):
             job = next((j for j in jobs if j.id == job_id), None)
 
             if not job:
-                console.print(f"[bold red]✗ Job {job_id} not found in run {run_id}[/bold red]")
+                console.print(
+                    f"[bold red]✗ Job {job_id} not found in run {run_id}[/bold red]"
+                )
                 return None
 
             console.print(
@@ -391,9 +404,7 @@ class GetGithubActionsLogsAction(Action):
                     # Write logs to file
                     log_file.write_text(response.text)
 
-                    console.print(
-                        "[bold green]✓ Downloaded job logs[/bold green]"
-                    )
+                    console.print("[bold green]✓ Downloaded job logs[/bold green]")
                     console.print(f"[dim]Location: {log_file}[/dim]")
 
                     return str(log_file)
@@ -404,7 +415,9 @@ class GetGithubActionsLogsAction(Action):
                     return None
 
             except Exception as e:
-                console.print(f"[bold red]✗ Error downloading logs: {str(e)}[/bold red]")
+                console.print(
+                    f"[bold red]✗ Error downloading logs: {str(e)}[/bold red]"
+                )
                 return None
 
         except GithubException as e:

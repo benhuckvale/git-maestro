@@ -14,9 +14,9 @@ class TestParseGitlabUrl:
         result = parse_gitlab_url(url)
 
         assert result is not None
-        assert result['host'] == "gitlab.com"
-        assert result['project_path'] == "mygroup/myproject"
-        assert result['project_path_encoded'] == "mygroup%2Fmyproject"
+        assert result["host"] == "gitlab.com"
+        assert result["project_path"] == "mygroup/myproject"
+        assert result["project_path_encoded"] == "mygroup%2Fmyproject"
 
     def test_parse_https_url_without_git_suffix(self):
         """Test parsing HTTPS URL without .git suffix."""
@@ -24,9 +24,9 @@ class TestParseGitlabUrl:
         result = parse_gitlab_url(url)
 
         assert result is not None
-        assert result['host'] == "gitlab.com"
-        assert result['project_path'] == "mygroup/myproject"
-        assert result['project_path_encoded'] == "mygroup%2Fmyproject"
+        assert result["host"] == "gitlab.com"
+        assert result["project_path"] == "mygroup/myproject"
+        assert result["project_path_encoded"] == "mygroup%2Fmyproject"
 
     def test_parse_https_url_with_nested_groups(self):
         """Test parsing HTTPS URL with nested groups."""
@@ -34,9 +34,9 @@ class TestParseGitlabUrl:
         result = parse_gitlab_url(url)
 
         assert result is not None
-        assert result['host'] == "gitlab.com"
-        assert result['project_path'] == "group/subgroup/project"
-        assert result['project_path_encoded'] == "group%2Fsubgroup%2Fproject"
+        assert result["host"] == "gitlab.com"
+        assert result["project_path"] == "group/subgroup/project"
+        assert result["project_path_encoded"] == "group%2Fsubgroup%2Fproject"
 
     def test_parse_ssh_url(self):
         """Test parsing SSH GitLab URL."""
@@ -44,9 +44,9 @@ class TestParseGitlabUrl:
         result = parse_gitlab_url(url)
 
         assert result is not None
-        assert result['host'] == "gitlab.com"
-        assert result['project_path'] == "mygroup/myproject"
-        assert result['project_path_encoded'] == "mygroup%2Fmyproject"
+        assert result["host"] == "gitlab.com"
+        assert result["project_path"] == "mygroup/myproject"
+        assert result["project_path_encoded"] == "mygroup%2Fmyproject"
 
     def test_parse_ssh_url_without_git_suffix(self):
         """Test parsing SSH URL without .git suffix."""
@@ -54,8 +54,8 @@ class TestParseGitlabUrl:
         result = parse_gitlab_url(url)
 
         assert result is not None
-        assert result['host'] == "gitlab.com"
-        assert result['project_path'] == "mygroup/myproject"
+        assert result["host"] == "gitlab.com"
+        assert result["project_path"] == "mygroup/myproject"
 
     def test_parse_ssh_url_with_nested_groups(self):
         """Test parsing SSH URL with nested groups."""
@@ -63,8 +63,8 @@ class TestParseGitlabUrl:
         result = parse_gitlab_url(url)
 
         assert result is not None
-        assert result['host'] == "gitlab.com"
-        assert result['project_path'] == "group/subgroup/project"
+        assert result["host"] == "gitlab.com"
+        assert result["project_path"] == "group/subgroup/project"
 
     def test_parse_custom_domain_https(self):
         """Test parsing custom GitLab domain HTTPS URL."""
@@ -72,8 +72,8 @@ class TestParseGitlabUrl:
         result = parse_gitlab_url(url)
 
         assert result is not None
-        assert result['host'] == "gitlab.example.com"
-        assert result['project_path'] == "mygroup/myproject"
+        assert result["host"] == "gitlab.example.com"
+        assert result["project_path"] == "mygroup/myproject"
 
     def test_parse_custom_domain_ssh(self):
         """Test parsing custom GitLab domain SSH URL."""
@@ -81,8 +81,8 @@ class TestParseGitlabUrl:
         result = parse_gitlab_url(url)
 
         assert result is not None
-        assert result['host'] == "gitlab.example.com"
-        assert result['project_path'] == "mygroup/myproject"
+        assert result["host"] == "gitlab.example.com"
+        assert result["project_path"] == "mygroup/myproject"
 
     def test_parse_invalid_url(self):
         """Test parsing invalid URL returns None."""
@@ -108,7 +108,7 @@ class TestParseGitlabUrl:
 class TestGitLabClientInit:
     """Tests for GitLabClient initialization."""
 
-    @patch('git_maestro.gitlab.gitlab')
+    @patch("git_maestro.gitlab.gitlab")
     def test_client_init_with_valid_url(self, mock_gitlab_module):
         """Test client initialization with valid URL."""
         # Setup mocks
@@ -130,7 +130,7 @@ class TestGitLabClientInit:
         )
         mock_gl.projects.get.assert_called_once_with("testgroup%2Ftestproject")
 
-    @patch('git_maestro.gitlab.gitlab')
+    @patch("git_maestro.gitlab.gitlab")
     def test_client_init_with_ssh_url(self, mock_gitlab_module):
         """Test client initialization with SSH URL."""
         # Setup mocks
@@ -147,7 +147,7 @@ class TestGitLabClientInit:
         assert client.host == "gitlab.com"
         assert client.project_path == "testgroup/testproject"
 
-    @patch('git_maestro.gitlab.gitlab')
+    @patch("git_maestro.gitlab.gitlab")
     def test_client_init_with_invalid_url(self, mock_gitlab_module):
         """Test client initialization with invalid URL raises ValueError."""
         url = "not-a-valid-url"
@@ -156,7 +156,7 @@ class TestGitLabClientInit:
         with pytest.raises(ValueError, match="Invalid GitLab URL"):
             GitLabClient(url, token)
 
-    @patch('git_maestro.gitlab.gitlab', None)
+    @patch("git_maestro.gitlab.gitlab", None)
     def test_client_init_without_gitlab_installed(self):
         """Test client initialization without python-gitlab raises ImportError."""
         url = "https://gitlab.com/testgroup/testproject.git"
@@ -169,7 +169,7 @@ class TestGitLabClientInit:
 class TestGitLabClientMethods:
     """Tests for GitLabClient methods."""
 
-    @patch('git_maestro.gitlab.gitlab')
+    @patch("git_maestro.gitlab.gitlab")
     def test_get_pipelines(self, mock_gitlab_module):
         """Test getting pipelines."""
         # Setup mocks
@@ -187,7 +187,7 @@ class TestGitLabClientMethods:
         assert pipelines[0] == mock_pipeline
         mock_project.pipelines.list.assert_called_once_with(per_page=5, get_all=False)
 
-    @patch('git_maestro.gitlab.gitlab')
+    @patch("git_maestro.gitlab.gitlab")
     def test_get_pipelines_caps_at_100(self, mock_gitlab_module):
         """Test getting pipelines caps at 100."""
         # Setup mocks
@@ -203,7 +203,7 @@ class TestGitLabClientMethods:
         # Should be capped at 100
         mock_project.pipelines.list.assert_called_once_with(per_page=100, get_all=False)
 
-    @patch('git_maestro.gitlab.gitlab')
+    @patch("git_maestro.gitlab.gitlab")
     def test_get_pipeline(self, mock_gitlab_module):
         """Test getting a specific pipeline."""
         # Setup mocks
@@ -220,7 +220,7 @@ class TestGitLabClientMethods:
         assert pipeline == mock_pipeline
         mock_project.pipelines.get.assert_called_once_with(123)
 
-    @patch('git_maestro.gitlab.gitlab')
+    @patch("git_maestro.gitlab.gitlab")
     def test_get_pipeline_jobs(self, mock_gitlab_module):
         """Test getting jobs for a pipeline."""
         # Setup mocks
@@ -241,7 +241,7 @@ class TestGitLabClientMethods:
         mock_project.pipelines.get.assert_called_once_with(123)
         mock_pipeline.jobs.list.assert_called_once_with(get_all=True)
 
-    @patch('git_maestro.gitlab.gitlab')
+    @patch("git_maestro.gitlab.gitlab")
     def test_get_job(self, mock_gitlab_module):
         """Test getting a specific job."""
         # Setup mocks
@@ -258,7 +258,7 @@ class TestGitLabClientMethods:
         assert job == mock_job
         mock_project.jobs.get.assert_called_once_with(456)
 
-    @patch('git_maestro.gitlab.gitlab')
+    @patch("git_maestro.gitlab.gitlab")
     def test_get_job_trace(self, mock_gitlab_module):
         """Test getting job trace (logs)."""
         # Setup mocks
@@ -276,7 +276,7 @@ class TestGitLabClientMethods:
         assert trace == "log content"
         mock_job.trace.assert_called_once()
 
-    @patch('git_maestro.gitlab.gitlab')
+    @patch("git_maestro.gitlab.gitlab")
     def test_get_job_trace_with_decode_error(self, mock_gitlab_module):
         """Test getting job trace handles decode errors."""
         # Setup mocks
@@ -294,7 +294,7 @@ class TestGitLabClientMethods:
         # Should handle decode error gracefully
         assert isinstance(trace, str)
 
-    @patch('git_maestro.gitlab.gitlab')
+    @patch("git_maestro.gitlab.gitlab")
     def test_get_pipeline_status(self, mock_gitlab_module):
         """Test getting pipeline status."""
         # Setup mocks
@@ -314,11 +314,11 @@ class TestGitLabClientMethods:
         client = GitLabClient("https://gitlab.com/test/project.git", "token")
         status = client.get_pipeline_status(123)
 
-        assert status['status'] == "success"
-        assert status['ref'] == "main"
-        assert status['sha'] == "abc123"
+        assert status["status"] == "success"
+        assert status["ref"] == "main"
+        assert status["sha"] == "abc123"
 
-    @patch('git_maestro.gitlab.gitlab')
+    @patch("git_maestro.gitlab.gitlab")
     def test_get_job_status(self, mock_gitlab_module):
         """Test getting job status."""
         # Setup mocks
@@ -340,12 +340,12 @@ class TestGitLabClientMethods:
         client = GitLabClient("https://gitlab.com/test/project.git", "token")
         status = client.get_job_status(456)
 
-        assert status['status'] == "failed"
-        assert status['stage'] == "test"
-        assert status['name'] == "unit-tests"
-        assert status['failure_reason'] == "script_failure"
+        assert status["status"] == "failed"
+        assert status["stage"] == "test"
+        assert status["name"] == "unit-tests"
+        assert status["failure_reason"] == "script_failure"
 
-    @patch('git_maestro.gitlab.gitlab')
+    @patch("git_maestro.gitlab.gitlab")
     def test_get_failed_jobs(self, mock_gitlab_module):
         """Test getting failed jobs for a pipeline."""
         # Setup mocks
@@ -374,11 +374,11 @@ class TestGitLabClientMethods:
         failed_jobs = client.get_failed_jobs(123)
 
         assert len(failed_jobs) == 1
-        assert failed_jobs[0]['id'] == 456
-        assert failed_jobs[0]['name'] == "test-job"
-        assert failed_jobs[0]['status'] == "failed"
+        assert failed_jobs[0]["id"] == 456
+        assert failed_jobs[0]["name"] == "test-job"
+        assert failed_jobs[0]["status"] == "failed"
 
-    @patch('git_maestro.gitlab.gitlab')
+    @patch("git_maestro.gitlab.gitlab")
     def test_download_job_log(self, mock_gitlab_module, tmp_path):
         """Test downloading job log to file."""
         # Setup mocks
@@ -399,7 +399,7 @@ class TestGitLabClientMethods:
         assert output_file.exists()
         assert output_file.read_text() == "log content"
 
-    @patch('git_maestro.gitlab.gitlab')
+    @patch("git_maestro.gitlab.gitlab")
     def test_download_job_log_handles_error(self, mock_gitlab_module, tmp_path):
         """Test downloading job log handles errors gracefully."""
         # Setup mocks
