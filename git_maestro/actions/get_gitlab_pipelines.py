@@ -285,11 +285,11 @@ class GetGitlabPipelinesAction(Action):
             log_file = pipeline_dir / f"job-{job.id}-{safe_name}.log"
 
             if client.download_job_log(job_id, log_file):
-                console.print(f"[bold green]✓ Downloaded job logs[/bold green]")
+                console.print("[bold green]✓ Downloaded job logs[/bold green]")
                 console.print(f"[dim]Location: {log_file}[/dim]")
                 return str(log_file)
             else:
-                console.print(f"[bold red]✗ Failed to download logs[/bold red]")
+                console.print("[bold red]✗ Failed to download logs[/bold red]")
                 return None
 
         except Exception as e:

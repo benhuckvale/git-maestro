@@ -226,7 +226,7 @@ Examples:
     # Construct new URL with unique project name
     unique_project_url = f"https://{parsed['host']}/{namespace_path}/{unique_project_name}"
 
-    print(f"Testing GitLab integration")
+    print("Testing GitLab integration")
     print(f"  Namespace: {namespace_path}")
     print(f"  Project: {unique_project_name}")
     print(f"  URL: {unique_project_url}\n")
@@ -237,12 +237,12 @@ Examples:
     print("=" * 60)
     parsed_unique = parse_gitlab_url(unique_project_url)
     if parsed_unique:
-        print(f"✓ URL parsed successfully")
+        print("✓ URL parsed successfully")
         print(f"  Host: {parsed_unique['host']}")
         print(f"  Project path: {parsed_unique['project_path']}")
         print(f"  Encoded path: {parsed_unique['project_path_encoded']}")
     else:
-        print(f"✗ Failed to parse URL")
+        print("✗ Failed to parse URL")
         sys.exit(1)
 
     # Test 2: Initialize client (create project if needed)
@@ -254,14 +254,14 @@ Examples:
     project_was_created = False
     try:
         client = GitLabClient(unique_project_url, token)
-        print(f"✓ Client initialized successfully")
+        print("✓ Client initialized successfully")
         print(f"  Project: {client.project.name}")
         print(f"  Project ID: {client.project.id}")
         print(f"  Web URL: {client.project.web_url}")
     except Exception as e:
         error_msg = str(e)
         if "404" in error_msg or "Not Found" in error_msg:
-            print(f"Project does not exist, creating it...")
+            print("Project does not exist, creating it...")
             print("")
 
             # Create the project
@@ -302,7 +302,7 @@ Examples:
                 client.gl = gl_conn
                 client.project = created_project
 
-                print(f"✓ Client initialized successfully with created project")
+                print("✓ Client initialized successfully with created project")
                 print(f"  Project: {client.project.name}")
                 print(f"  Project ID: {client.project.id}")
                 print(f"  Web URL: {client.project.web_url}")
@@ -363,7 +363,7 @@ Examples:
         print("=" * 60)
         try:
             pipeline = client.get_pipeline(latest_pipeline.id)
-            print(f"✓ Retrieved pipeline details")
+            print("✓ Retrieved pipeline details")
             print(f"  Status: {pipeline.status}")
             print(f"  Ref: {pipeline.ref}")
             print(f"  User: {pipeline.user['username'] if pipeline.user else 'N/A'}")
@@ -404,7 +404,7 @@ Examples:
                     success = client.download_job_log(first_job.id, log_file)
                     if success:
                         log_size = log_file.stat().st_size
-                        print(f"✓ Downloaded job log")
+                        print("✓ Downloaded job log")
                         print(f"  Location: {log_file}")
                         print(f"  Size: {log_size} bytes")
 
@@ -412,11 +412,11 @@ Examples:
                         with open(log_file, 'r') as f:
                             lines = f.readlines()[:5]
                             if lines:
-                                print(f"\n  First few lines:")
+                                print("\n  First few lines:")
                                 for line in lines:
                                     print(f"    {line.rstrip()}")
                     else:
-                        print(f"✗ Failed to download job log")
+                        print("✗ Failed to download job log")
                 except Exception as e:
                     print(f"✗ Error downloading job log: {e}")
 
@@ -426,7 +426,7 @@ Examples:
                 print("=" * 60)
                 try:
                     status = client.get_job_status(first_job.id)
-                    print(f"✓ Retrieved job status")
+                    print("✓ Retrieved job status")
                     print(f"  Status: {status['status']}")
                     print(f"  Stage: {status['stage']}")
                     print(f"  Name: {status['name']}")
@@ -471,7 +471,7 @@ Examples:
         print("=" * 60)
         try:
             status = client.get_pipeline_status(latest_pipeline.id)
-            print(f"✓ Retrieved pipeline status")
+            print("✓ Retrieved pipeline status")
             print(f"  Status: {status['status']}")
             print(f"  Ref: {status['ref']}")
             print(f"  SHA: {status['sha'][:8]}")

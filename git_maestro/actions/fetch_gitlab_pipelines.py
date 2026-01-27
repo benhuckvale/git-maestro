@@ -147,7 +147,7 @@ class FetchGitlabPipelinesAction(Action):
 
             # Create summary table
             table = Table(
-                title=f"GitLab Pipelines - Recent Runs",
+                title="GitLab Pipelines - Recent Runs",
                 show_header=True,
             )
             table.add_column("#", style="dim", width=3)

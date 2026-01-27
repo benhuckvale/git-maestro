@@ -111,7 +111,7 @@ class DownloadAzureStageLogsAction(Action):
 
                 # Display and save diagnostic issues if present
                 if job.get('issues'):
-                    console.print(f"[bold red]  Diagnostic Issues:[/bold red]")
+                    console.print("[bold red]  Diagnostic Issues:[/bold red]")
 
                     # Build issues content
                     issues_content = []
@@ -126,7 +126,7 @@ class DownloadAzureStageLogsAction(Action):
                         issues_file = run_dir / f"job-{job['id']}-{job_name.replace(' ', '_')}.issues"
                         with open(issues_file, "w") as f:
                             f.write('\n'.join(issues_content))
-                        console.print(f"  [green]✓ Saved diagnostic issues[/green]")
+                        console.print("  [green]✓ Saved diagnostic issues[/green]")
                         downloaded_count += 1
                     except Exception as e:
                         console.print(f"  [yellow]⚠ Error saving issues: {e}[/yellow]")
@@ -139,7 +139,7 @@ class DownloadAzureStageLogsAction(Action):
                         job_log_file = run_dir / f"job-{job['id']}-{job_name.replace(' ', '_')}.log"
                         with open(job_log_file, "w") as f:
                             f.write(job['log_content'])
-                        console.print(f"  [green]✓ Downloaded job log[/green]")
+                        console.print("  [green]✓ Downloaded job log[/green]")
                         downloaded_count += 1
                     except Exception as e:
                         console.print(f"  [yellow]⚠ Error saving job log: {e}[/yellow]")

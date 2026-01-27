@@ -1,7 +1,7 @@
 """Tests for GitLab integration."""
 
 import pytest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, patch
 from git_maestro.gitlab import parse_gitlab_url, GitLabClient
 
 
@@ -87,10 +87,9 @@ class TestParseGitlabUrl:
     def test_parse_invalid_url(self):
         """Test parsing invalid URL returns None."""
         url = "https://github.com/org/repo"
-        result = parse_gitlab_url(url)
-
         # The function might return something for github.com, so let's check it handles it
         # Actually, this might parse as a valid URL structure, so let's test empty instead
+        parse_gitlab_url(url)
         assert parse_gitlab_url("") is None
 
     def test_parse_empty_url(self):

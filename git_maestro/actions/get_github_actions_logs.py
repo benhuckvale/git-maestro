@@ -4,7 +4,6 @@ import re
 from pathlib import Path
 from typing import Optional, Any
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn
 from github import Github, GithubException
 from .base import Action
 from git_maestro.state import RepoState
@@ -220,8 +219,6 @@ class GetGithubActionsLogsAction(Action):
                 else:
                     duration_str = "—"
 
-                status_text = job.conclusion if job.status == "completed" else job.status
-
                 jobs_info.append(
                     {
                         "job_id": job.id,
@@ -395,7 +392,7 @@ class GetGithubActionsLogsAction(Action):
                     log_file.write_text(response.text)
 
                     console.print(
-                        f"[bold green]✓ Downloaded job logs[/bold green]"
+                        "[bold green]✓ Downloaded job logs[/bold green]"
                     )
                     console.print(f"[dim]Location: {log_file}[/dim]")
 

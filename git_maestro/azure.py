@@ -3,7 +3,6 @@
 import re
 import requests
 from typing import Optional, Tuple
-from urllib.parse import urlparse
 
 
 def parse_azure_url(url: str) -> Optional[Tuple[str, str, str]]:

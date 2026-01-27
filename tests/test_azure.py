@@ -1,8 +1,6 @@
 """Tests for Azure DevOps integration."""
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
-from datetime import datetime
+from unittest.mock import Mock, patch
 from git_maestro.azure import parse_azure_url, get_org_project_from_url, AzureClient
 
 

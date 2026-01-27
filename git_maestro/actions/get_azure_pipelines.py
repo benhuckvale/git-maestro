@@ -1,6 +1,5 @@
 """Action to fetch Azure DevOps Pipelines logs from specific runs."""
 
-import re
 from pathlib import Path
 from typing import Optional, Any
 from rich.console import Console

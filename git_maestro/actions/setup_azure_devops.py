@@ -229,14 +229,16 @@ class SetupAzureDevOpsAction(Action):
 
             # Get description with smart suggestions
             description = self._get_description(state, repo_name)
+            if description:
+                console.print(f"[dim]Description: {description}[/dim]")
 
             # Test authentication and create project
-            console.print(f"\n[cyan]Authenticating with Azure DevOps...[/cyan]")
+            console.print("\n[cyan]Authenticating with Azure DevOps...[/cyan]")
             try:
-                azure_client = AzureClient(organization, project, token)
+                AzureClient(organization, project, token)
                 # Simple test: try to get pipelines (will fail if project doesn't exist, but that's ok)
                 # We're really just testing the authentication here
-                console.print(f"[green]✓ Authenticated with Azure DevOps[/green]")
+                console.print("[green]✓ Authenticated with Azure DevOps[/green]")
             except Exception as e:
                 console.print(f"[bold red]✗ Azure DevOps authentication failed: {e}[/bold red]")
                 return False
@@ -245,7 +247,7 @@ class SetupAzureDevOpsAction(Action):
             # Format: git@ssh.dev.azure.com:v3/{org}/{project}/{repo}
             remote_url = f"git@ssh.dev.azure.com:v3/{organization}/{project}/{repo_name}"
 
-            console.print(f"\n[cyan]Adding remote...[/cyan]")
+            console.print("\n[cyan]Adding remote...[/cyan]")
             try:
                 origin = state.repo.create_remote("origin", remote_url)
                 console.print(

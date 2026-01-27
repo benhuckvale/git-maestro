@@ -2,7 +2,6 @@
 
 import os
 from pathlib import Path
-from typing import Optional
 
 from rich.console import Console
 
@@ -111,7 +110,7 @@ class ConfigureAzureTokenAction(Action):
                 return False
 
             # Test authentication
-            console.print(f"\n[cyan]Testing authentication...[/cyan]")
+            console.print("\n[cyan]Testing authentication...[/cyan]")
             try:
                 if parsed:
                     org, project, repo = parsed
