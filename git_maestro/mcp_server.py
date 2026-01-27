@@ -1,10 +1,12 @@
 """MCP (Model Context Protocol) server for git-maestro."""
 
+from __future__ import annotations
+
+import inspect
 import json
 import sys
 from pathlib import Path
-from typing import Any, Iterator, Tuple
-import inspect
+from typing import Any, Iterator, Optional, Tuple
 
 from git_maestro.state import RepoState
 from git_maestro.actions import (
@@ -20,9 +22,9 @@ class MCPServer:
 
     def __init__(self):
         self.version = "2024-11-05"
-        self.dev_installation_error: str | None = None
+        self.dev_installation_error: Optional[str] = None
         self._check_dev_installation_safety()
-        self._use_framing: bool | None = None
+        self._use_framing: Optional[bool] = None
         self.tools = {
             "download_job_traces": {
                 "description": "Download GitHub Actions job traces/logs for failed jobs in the current repository",
@@ -389,7 +391,7 @@ class MCPServer:
 
             yield bytes(payload)
 
-    def _incoming_messages(self) -> Iterator[Tuple[bool, dict[str, Any] | None]]:
+    def _incoming_messages(self) -> Iterator[Tuple[bool, Optional[dict[str, Any]]]]:
         """Yield decoded JSON messages, flagging parse errors."""
         for payload in self._read_message_payloads():
             try:
@@ -461,7 +463,7 @@ class MCPServer:
                     }
                     self._send_response(error_response)
 
-    def process_message(self, message: Any) -> dict[str, Any] | None:
+    def process_message(self, message: Any) -> Optional[dict[str, Any]]:
         """Process an MCP message.
 
         JSON-RPC notifications (messages with no `id`) must not receive responses.

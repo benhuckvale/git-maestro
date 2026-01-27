@@ -247,7 +247,7 @@ class GetGitlabPipelinesAction(Action):
 
     def download_job_logs(
         self, state: RepoState, pipeline_id: int, job_id: int
-    ) -> str | None:
+    ) -> Optional[str]:
         """Download logs for a specific job in a pipeline.
 
         Args:
