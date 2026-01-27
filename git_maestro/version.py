@@ -41,3 +41,10 @@ def get_git_info() -> tuple[str, str, bool]:
         return "", "", False
 
 
+def get_version_string() -> str:
+    """Get formatted version string for display."""
+    commit, describe, is_dirty = get_git_info()
+    if describe:
+        dirty_indicator = "-dirty" if is_dirty else ""
+        return f"{describe}{dirty_indicator}"
+    return "0.1.0"

@@ -11,9 +11,60 @@ from rich.table import Table
 from .state import RepoState
 from .actions.base import Action
 from .selection_helper import select_number_from_menu
+from .version import get_version_string
 
 
 console = Console()
+
+# Badger mascot with baton and bow-tie
+BADGER_ART = r"""
+    |  ^_ _^
+    |  | \ |\
+    |  \ o\|o|
+    |   \_ \ |
+    "     \_\|
+    O     >o<
+""".strip('\n')
+
+TITLE_ART = r"""
+  ▄▀  █ ▀█▀   █▀▄▀█ ▄▀▄ ██▀ ▄▀▀ ▀█▀ █▀▄ █▀█
+  ▀▄█ █  █    █ ▀ █ █▀█ █▄▄ ▄█▀  █  █▀▄ █▄█
+""".strip('\n')
+
+
+def display_banner():
+    """Display the Git Maestro startup banner."""
+    version = get_version_string()
+    version_str = f"v{version}" if not version.startswith("v") else version
+
+    badger_lines = BADGER_ART.split('\n')
+    title_lines = TITLE_ART.split('\n')
+
+    # Combine badger and title side by side
+    banner_lines = []
+    max_badger_width = max(len(line) for line in badger_lines)
+    title_width = 42
+
+    for i in range(max(len(badger_lines), len(title_lines))):
+        badger_part = badger_lines[i] if i < len(badger_lines) else ""
+        title_part = title_lines[i] if i < len(title_lines) else ""
+        padded_badger = badger_part.ljust(max_badger_width)
+
+        # Put version on the right side of line 4 (bow-tie area)
+        if i == 4:
+            right_part = f"{title_part:<{title_width - len(version_str)}}{version_str}"
+        else:
+            right_part = title_part
+
+        banner_lines.append(f"  {padded_badger}    {right_part}")
+
+    banner_text = '\n'.join(banner_lines)
+
+    console.print(Panel(
+        f"[cyan]{banner_text}[/cyan]",
+        border_style="magenta",
+        padding=(0, 1),
+    ))
 
 
 class Menu:
@@ -191,6 +242,9 @@ class Menu:
     def run(self):
         """Run the interactive menu loop."""
         try:
+            # Show banner on startup
+            display_banner()
+
             iteration = 0
             show_state_next = True
             while True:
