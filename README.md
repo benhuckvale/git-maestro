@@ -217,3 +217,13 @@ MIT
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Integrations
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/github-lockup-white.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/github-lockup.svg">
+  <img src="docs/assets/github-lockup.svg" alt="Works with GitHub" height="24" style="vertical-align: middle;">
+</picture>
+
+Works with GitHub.
