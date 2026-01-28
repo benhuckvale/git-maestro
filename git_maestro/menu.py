@@ -77,7 +77,7 @@ class Menu:
 
     def display_state(self):
         """Display the current repository state."""
-        table = Table(show_header=False, box=box.ROUNDED, border_style="cyan")
+        table = Table(show_header=False, box=box.ROUNDED, border_style="cyan", expand=True)
         table.add_column("Property", style="bold yellow")
         table.add_column("Value")
 
@@ -123,7 +123,7 @@ class Menu:
                     "📋 Untracked Files", str(len(self.state.untracked_files))
                 )
             if self.state.modified_files:
-                table.add_row("✏️  Modified Files", str(len(self.state.modified_files)))
+                table.add_row(":fountain_pen:  Modified Files", str(len(self.state.modified_files)))
 
         panel = Panel(
             table,
