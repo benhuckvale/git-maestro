@@ -216,7 +216,7 @@ MIT
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to submit a Pull Request in accordance with the [contributing guidelines](CONTRIBUTING.md).
 
 ## Integrations
 
