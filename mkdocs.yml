@@ -53,7 +53,14 @@ markdown_extensions:
   - md_in_html
   - tables
 
+plugins:
+  - search
+  - social:
+      cards_layout: default
+
 extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/benhuckvale/git-maestro
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/git-maestro/
