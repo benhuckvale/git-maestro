@@ -6,7 +6,6 @@ from rich.console import Console
 
 from .state import RepoState
 from .menu import Menu
-from .mcp_server import MCPServer
 from .version import get_git_info
 from .actions import (
     InitRepoAction,
@@ -85,10 +84,16 @@ def main_interactive(path: Path):
     menu.run()
 
 
-def main_mcp():
-    """Run the MCP server."""
-    server = MCPServer()
-    server.handle_message()
+def main_mcp(platforms: set[str] | None = None):
+    """Run the MCP server.
+
+    Args:
+        platforms: Set of platforms to enable (github, azure, gitlab).
+                   If None, all platforms are enabled.
+    """
+    from .mcp_server import main as mcp_main
+
+    mcp_main(platforms=platforms)
 
 
 def main():
@@ -121,12 +126,27 @@ def main():
                         """[bold cyan]git-maestro mcp[/bold cyan] - MCP stdio server for AI assistants
 
 [bold]Usage:[/bold]
-  git-maestro mcp             Start the MCP server
-  git-maestro mcp -h          Show this help message
+  git-maestro mcp [OPTIONS]    Start the MCP server
+  git-maestro mcp -h           Show this help message
+
+[bold]Options:[/bold]
+  --github    Enable GitHub Actions tools
+  --azure     Enable Azure DevOps Pipelines tools
+  --gitlab    Enable GitLab CI/CD tools
+
+  If no platform flags specified, all platforms are enabled.
+
+[bold]Examples:[/bold]
+  git-maestro mcp                    Enable all platforms
+  git-maestro mcp --github           Enable only GitHub tools
+  git-maestro mcp --github --azure   Enable GitHub and Azure tools
 
 [bold]Description:[/bold]
   Runs git-maestro as a Model Context Protocol stdio server, allowing AI assistants
   to use git-maestro tools like downloading GitHub Actions job traces.
+
+  Specifying only the platforms you use reduces the number of tools exposed,
+  which saves context window tokens when used with AI assistants.
 
 [bold]Configuration:[/bold]
   Add to your mcp.json configuration file:
@@ -135,14 +155,31 @@ def main():
     "mcpServers": {
       "git-maestro": {
         "command": "git-maestro",
-        "args": ["mcp"]
+        "args": ["mcp", "--github"]
       }
     }
   }
 """
                     )
                     sys.exit(0)
-                main_mcp()
+
+                # Parse platform flags
+                platforms = set()
+                valid_flags = {"--github", "--azure", "--gitlab"}
+                for arg in sys.argv[2:]:
+                    if arg in valid_flags:
+                        platforms.add(arg[2:])  # Strip --
+                    else:
+                        console.print(
+                            f"[bold red]Error: Unknown option: {arg}[/bold red]"
+                        )
+                        console.print(
+                            f"[dim]Valid options: {', '.join(sorted(valid_flags))}[/dim]"
+                        )
+                        sys.exit(1)
+
+                # None means all platforms
+                main_mcp(platforms=platforms if platforms else None)
                 return
 
             # Otherwise treat as path argument

@@ -122,13 +122,13 @@ Add to your Claude Code `mcp.json`:
   "mcpServers": {
     "git-maestro": {
       "command": "git-maestro",
-      "args": ["mcp"]
+      "args": ["mcp", "--github"]
     }
   }
 }
 ```
 
-Then use `git-maestro mcp` in your Claude session to enable these tools.
+Use `--github`, `--azure`, or `--gitlab` flags to enable only the platforms you need. This reduces the number of tools exposed, **saving context window tokens**. Omit all flags to enable all platforms.
 
 📖 **[Full MCP Documentation](https://benhuckvale.github.io/git-maestro/github-api/#mcp-tools-for-github-actions)**
 

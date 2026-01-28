@@ -80,11 +80,42 @@ For Azure DevOps, you need a Personal Access Token with:
 4. Click **Create**
 5. Copy the token immediately
 
-## MCP Tools for GitHub Actions
+## MCP Server
 
-When running as an MCP server, Git Maestro exposes these tools for AI assistants:
+When running as an MCP server, Git Maestro exposes CI/CD tools for AI assistants.
 
-### `list_github_actions_runs(count)`
+### Platform Selection
+
+Use flags to enable only the platforms you need:
+
+```bash
+git-maestro mcp                    # All platforms (13 tools)
+git-maestro mcp --github           # GitHub Actions only (5 tools)
+git-maestro mcp --azure            # Azure DevOps only (4 tools)
+git-maestro mcp --gitlab           # GitLab CI/CD only (4 tools)
+git-maestro mcp --github --azure   # Multiple platforms (9 tools)
+```
+
+**Why filter platforms?** Each tool definition consumes context window tokens when used with AI assistants. If you only use GitHub, there's no need to load Azure and GitLab tools.
+
+### Configuration
+
+Add to your `mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "git-maestro": {
+      "command": "git-maestro",
+      "args": ["mcp", "--github"]
+    }
+  }
+}
+```
+
+### GitHub Actions Tools (`--github`)
+
+#### `list_github_actions_runs(count)`
 Get the most recent workflow runs.
 
 **Parameters:**
@@ -92,7 +123,7 @@ Get the most recent workflow runs.
 
 **Returns:** List of workflow runs with status, conclusion, and metadata
 
-### `get_github_actions_run_jobs(run_id)`
+#### `get_github_actions_run_jobs(run_id)`
 View job structure and details for a specific workflow run.
 
 **Parameters:**
@@ -100,7 +131,7 @@ View job structure and details for a specific workflow run.
 
 **Returns:** List of jobs with names, statuses, conclusions, and steps
 
-### `check_github_actions_job_status(run_id, job_id)`
+#### `check_github_actions_job_status(run_id, job_id)`
 Lightweight status check (fast polling without downloading logs).
 
 **Parameters:**
@@ -109,7 +140,7 @@ Lightweight status check (fast polling without downloading logs).
 
 **Returns:** Status summary (queued, in_progress, completed)
 
-### `download_github_actions_job_logs(run_id, job_id)`
+#### `download_github_actions_job_logs(run_id, job_id)`
 Fetch logs for a specific job.
 
 **Parameters:**
@@ -118,10 +149,85 @@ Fetch logs for a specific job.
 
 **Returns:** Full job logs as text
 
-### `download_job_traces()`
+##### `download_job_traces()`
 Download all failed job logs from the latest workflow run.
 
 **Returns:** Combined logs from all failed jobs
+
+### Azure DevOps Tools (`--azure`)
+
+#### `list_azure_pipelines_runs(count)`
+Get the most recent pipeline runs.
+
+**Parameters:**
+- `count` (optional, default: 10) - Number of runs to retrieve
+
+**Returns:** List of pipeline runs with status and metadata
+
+#### `get_azure_pipelines_run_stages(pipeline_id, run_id)`
+View stage structure and details for a specific pipeline run.
+
+**Parameters:**
+- `pipeline_id` (required) - The pipeline ID
+- `run_id` (required) - The pipeline run ID
+
+**Returns:** List of stages with names, statuses, and results
+
+#### `check_azure_pipelines_run_status(pipeline_id, run_id, stage_id)`
+Lightweight status check for a pipeline run or stage.
+
+**Parameters:**
+- `pipeline_id` (required) - The pipeline ID
+- `run_id` (required) - The pipeline run ID
+- `stage_id` (optional) - Specific stage ID to check
+
+**Returns:** Status summary
+
+#### `download_azure_pipelines_stage_logs(pipeline_id, run_id, stage_id)`
+Fetch logs for a specific stage.
+
+**Parameters:**
+- `pipeline_id` (required) - The pipeline ID
+- `run_id` (required) - The pipeline run ID
+- `stage_id` (required) - The stage ID
+
+**Returns:** Full stage logs as text
+
+### GitLab CI/CD Tools (`--gitlab`)
+
+#### `list_gitlab_pipelines_runs(count)`
+Get the most recent pipeline runs.
+
+**Parameters:**
+- `count` (optional, default: 10) - Number of runs to retrieve
+
+**Returns:** List of pipeline runs with status and metadata
+
+#### `get_gitlab_pipelines_run_jobs(pipeline_id)`
+View job structure and details for a specific pipeline.
+
+**Parameters:**
+- `pipeline_id` (required) - The pipeline ID
+
+**Returns:** List of jobs with names, statuses, and stages
+
+#### `check_gitlab_pipelines_run_status(pipeline_id, job_id)`
+Lightweight status check for a pipeline or job.
+
+**Parameters:**
+- `pipeline_id` (required) - The pipeline ID
+- `job_id` (optional) - Specific job ID to check
+
+**Returns:** Status summary
+
+#### `download_gitlab_pipelines_job_logs(pipeline_id, job_id)`
+Fetch logs for a specific job.
+
+**Parameters:**
+- `pipeline_id` (required) - The pipeline ID
+- `job_id` (required) - The job ID
+
+**Returns:** Full job logs as text
 
 ## Rate Limiting
 

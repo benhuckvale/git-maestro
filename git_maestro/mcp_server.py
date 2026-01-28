@@ -17,15 +17,42 @@ from git_maestro.actions import (
 )
 
 
+VALID_PLATFORMS = {"github", "azure", "gitlab"}
+
+# Map tool names to their platform
+TOOL_PLATFORMS = {
+    "download_job_traces": "github",
+    "list_github_actions_runs": "github",
+    "get_github_actions_run_jobs": "github",
+    "download_github_actions_job_logs": "github",
+    "check_github_actions_job_status": "github",
+    "list_azure_pipelines_runs": "azure",
+    "get_azure_pipelines_run_stages": "azure",
+    "download_azure_pipelines_stage_logs": "azure",
+    "check_azure_pipelines_run_status": "azure",
+    "list_gitlab_pipelines_runs": "gitlab",
+    "get_gitlab_pipelines_run_jobs": "gitlab",
+    "download_gitlab_pipelines_job_logs": "gitlab",
+    "check_gitlab_pipelines_run_status": "gitlab",
+}
+
+
 class MCPServer:
     """MCP server implementing git-maestro tools."""
 
-    def __init__(self):
+    def __init__(self, platforms: Optional[set[str]] = None):
+        """Initialize MCP server.
+
+        Args:
+            platforms: Set of platforms to enable (github, azure, gitlab).
+                       If None, all platforms are enabled.
+        """
         self.version = "2024-11-05"
+        self.platforms = platforms or VALID_PLATFORMS
         self.dev_installation_error: Optional[str] = None
         self._check_dev_installation_safety()
         self._use_framing: Optional[bool] = None
-        self.tools = {
+        self._all_tools = {
             "download_job_traces": {
                 "description": "Download GitHub Actions job traces/logs for failed jobs in the current repository",
                 "inputSchema": {
@@ -279,6 +306,12 @@ class MCPServer:
                     "required": ["pipeline_id"],
                 },
             },
+        }
+        # Filter tools based on enabled platforms
+        self.tools = {
+            name: info
+            for name, info in self._all_tools.items()
+            if TOOL_PLATFORMS.get(name) in self.platforms
         }
 
     def _check_dev_installation_safety(self) -> None:
@@ -1377,9 +1410,14 @@ class MCPServer:
             }
 
 
-def main():
-    """Main entry point for the MCP server."""
-    server = MCPServer()
+def main(platforms: Optional[set[str]] = None):
+    """Main entry point for the MCP server.
+
+    Args:
+        platforms: Set of platforms to enable (github, azure, gitlab).
+                   If None, all platforms are enabled.
+    """
+    server = MCPServer(platforms=platforms)
     server.handle_message()
 
 
