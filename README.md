@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/banner.png" alt="Git Maestro" width="600">
+  <img src="https://raw.githubusercontent.com/benhuckvale/git-maestro/main/docs/assets/logo-banner.png" alt="Git Maestro" width="600">
 </p>
 
 # 🎼 Git Maestro
@@ -71,6 +71,10 @@ Git Maestro will:
 5. Refresh and show updated options
 
 📖 **[Quick Start Guide](https://benhuckvale.github.io/git-maestro/quickstart/)**
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/benhuckvale/git-maestro/main/docs/assets/demo-banner.png" alt="Git Maestro in Action" width="800">
+</p>
 
 ## Current Actions
 
